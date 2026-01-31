@@ -1,23 +1,17 @@
-# Test {{ cookiecutter.project_slug }} help
-exec {{ cookiecutter.project_slug }} --help
+# Test github-janitor help
+exec github-janitor --help
 stdout 'Usage:'
-stdout '{{ cookiecutter.project_slug }}'
+stdout 'github-janitor'
 ! stderr .
 
 --
-# Test {{ cookiecutter.project_slug }} version
-exec {{ cookiecutter.project_slug }} --version
+# Test github-janitor version
+exec github-janitor --version
 stdout '0.1.0'
 ! stderr .
 
 --
-# Test example command
-exec {{ cookiecutter.project_slug }} example
-stdout 'Hello, World!'
-! stderr .
-
---
-# Test example command with custom message
-exec {{ cookiecutter.project_slug }} example --message 'Custom message'
-stdout 'Custom message'
-! stderr .
+# Test validate command shows authentication error
+exec github-janitor validate
+stderr 'configuration error'
+! stdout .

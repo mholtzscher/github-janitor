@@ -1,0 +1,63 @@
+repositories:
+  - owner: mholtzscher
+    name: aerospace-utils
+  - owner: mholtzscher
+    name: melt
+  - owner: mholtzscher
+    name: homebrew-tap
+  - owner: mholtzscher
+    name: ugh
+  - owner: mholtzscher
+    name: github-janitor
+
+settings:
+  # Merge methods
+  allow_merge_commit: false
+  allow_squash_merge: true
+  allow_rebase_merge: true
+  delete_branch_on_merge: true
+
+  # Merge commit messages (GitHub API values)
+  squash_merge_commit_title: PR_TITLE
+  squash_merge_commit_message: PR_BODY
+  merge_commit_title: PR_TITLE
+  merge_commit_message: PR_BODY
+
+  # Repository visibility
+  visibility: public
+
+  # Repository features
+  has_issues: true
+  has_projects: false
+  has_wiki: false
+  has_discussions: true
+
+  # Additional settings
+  archived: false
+  allow_update_branch: true
+  web_commit_signoff_required: false
+  allow_forking: true
+
+  # Branch protection (applied to all repos)
+  # NOTE: before running `sync`, set status_check_contexts to the actual checks your repos use.
+  branch_protection:
+    enabled: true
+    pattern: "main"
+
+    # Pull request reviews
+    required_reviews: 1
+    dismiss_stale_reviews: true
+    require_code_owner_reviews: false
+
+    # Status checks
+    require_status_checks: true
+    require_branches_up_to_date: true
+    status_check_contexts: ["ci/test"]
+
+    # Other branch protection
+    include_admins: false
+    require_linear_history: false
+    require_signed_commits: false
+    require_conversation_resolution: true
+    allow_force_pushes: false
+    allow_deletions: false
