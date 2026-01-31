@@ -1,0 +1,26 @@
+{
+  "template": "https://github.com/mholtzscher/templates.git",
+  "commit": "unknown",
+  "context": {
+    "cookiecutter": {
+      "project_name": "github-janitor",
+      "project_slug": "github-janitor",
+      "project_description": "A Go CLI tool built with Nix",
+      "github_owner": "mholtzscher",
+      "github_repo": "github-janitor",
+      "module_path": "github.com/mholtzscher/github-janitor",
+      "author_name": "Michael Holtzscher",
+      "author_email": "michael@holtzscher.com",
+      "license": "MIT",
+      "use_cgo": "no",
+      "use_homebrew": "yes",
+      "go_version": "1.25"
+    }
+  },
+  "directory": "github-janitor",
+  "skip": [
+    "go.sum",
+    "gomod2nix.toml",
+    "flake.lock"
+  ]
+}

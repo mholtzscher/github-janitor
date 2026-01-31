@@ -1,0 +1,63 @@
+version: 2
+
+project_name: github-janitor
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: github-janitor
+    main: .
+    binary: github-janitor
+    ldflags:
+      - -s -w
+      - -X github.com/mholtzscher/github-janitor/cmd.Version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: github-native
+
+brews:
+  - name: github-janitor
+    repository:
+      owner: mholtzscher
+      name: homebrew-tap
+      token: "{{ .Env.PAT }}"
+    directory: Formula
+    homepage: "https://github.com/mholtzscher/github-janitor"
+    description: "A Go CLI tool built with Nix"
+    license: "MIT"
+    install: |
+      bin.install "github-janitor"
+    test: |
+      system "#{bin}/github-janitor", "--version"
+
+
+release:
+  github:
+    owner: mholtzscher
+    name: github-janitor
+  prerelease: auto
+  name_template: "v{{.Version}}"

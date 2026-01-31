@@ -1,0 +1,23 @@
+# Test {{ cookiecutter.project_slug }} help
+exec {{ cookiecutter.project_slug }} --help
+stdout 'Usage:'
+stdout '{{ cookiecutter.project_slug }}'
+! stderr .
+
+--
+# Test {{ cookiecutter.project_slug }} version
+exec {{ cookiecutter.project_slug }} --version
+stdout '0.1.0'
+! stderr .
+
+--
+# Test example command
+exec {{ cookiecutter.project_slug }} example
+stdout 'Hello, World!'
+! stderr .
+
+--
+# Test example command with custom message
+exec {{ cookiecutter.project_slug }} example --message 'Custom message'
+stdout 'Custom message'
+! stderr .

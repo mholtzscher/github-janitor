@@ -1,0 +1,4 @@
+github.com/urfave/cli/v3 v3.6.2 h1:qWG5FYf9l5qN7lODH+qv1wMY85V0F0cjXCFgmm2WVsE=
+github.com/urfave/cli/v3 v3.6.2/go.mod h1:F/AzkTMIl7U9pj/2iCVvG8m2FBLsEa3xZZLG8i5o7gQ=
+golang.org/x/sys v0.40.0 h1:PZsTlJSt+w37ymKhP49HqVa8rIO67Q2ctknLzXrD+eY=
+golang.org/x/sys v0.40.0/go.mod h1:BKzbGlD2uC7BnqTJfM96v3zRS2FNS8GId5zHAXwvEJo=

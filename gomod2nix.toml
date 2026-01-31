@@ -1,0 +1,9 @@
+schema = 3
+
+[mod]
+  [mod."github.com/urfave/cli/v3"]
+    version = "v3.6.2"
+    hash = "sha256-GeTwfmXv2okvX2kmMREozvH4PH6ihPNVFSNSWrW+gyQ="
+  [mod."golang.org/x/sys"]
+    version = "v0.40.0"
+    hash = "sha256-KDe+wMr7dfMFwKMJEljzk+f82pQWFFPoFHivjD7qJGg="
