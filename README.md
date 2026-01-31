@@ -13,8 +13,18 @@ nix run github:mholtzscher/github-janitor
 ### Using Homebrew
 
 ```bash
+# One-liner
+brew install mholtzscher/tap/github-janitor
+
+# Or add the tap explicitly
 brew tap mholtzscher/tap
 brew install github-janitor
+
+# Upgrade
+brew upgrade github-janitor
+
+# Verify
+github-janitor --version
 ```
 
 ### From Source
