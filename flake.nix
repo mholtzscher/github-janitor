@@ -26,7 +26,7 @@
           overlays = [ gomod2nix.overlays.default ];
         };
 
-        version = "0.1.1"; # x-release-please-version
+        version = "0.1.2"; # x-release-please-version
 
         # Add platform-specific build inputs here (e.g., CGO deps)
         buildInputs = [ ];
