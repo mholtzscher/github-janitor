@@ -6,7 +6,8 @@ stdout 'github-janitor'
 
 # Test github-janitor version
 exec github-janitor --version
-stdout '0.1.0'
+stdout 'github-janitor version'
+stdout 'version v?[0-9]+\.[0-9]+\.[0-9]+'
 ! stderr .
 
 # Test validate command shows configuration error
