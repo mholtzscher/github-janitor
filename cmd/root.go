@@ -4,6 +4,7 @@ package cmd
 import (
 	"context"
 
+	"github.com/fatih/color"
 	initcmd "github.com/mholtzscher/github-janitor/cmd/init"
 	"github.com/mholtzscher/github-janitor/cmd/plan"
 	"github.com/mholtzscher/github-janitor/cmd/sync"
@@ -21,6 +22,16 @@ func Run(ctx context.Context, args []string) error {
 		Name:    "github-janitor",
 		Usage:   "Synchronize GitHub repository settings across multiple repos",
 		Version: Version,
+		Before: func(ctx context.Context, cmd *ufcli.Command) (context.Context, error) {
+			opts := cli.GlobalOptions{
+				Verbose: cmd.Bool(cli.FlagVerbose),
+				NoColor: cmd.Bool(cli.FlagNoColor),
+			}
+			if opts.NoColor {
+				color.NoColor = true
+			}
+			return cli.WithGlobalOptions(ctx, opts), nil
+		},
 		Flags: []ufcli.Flag{
 			&ufcli.BoolFlag{
 				Name:  cli.FlagVerbose,

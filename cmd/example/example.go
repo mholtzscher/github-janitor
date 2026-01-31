@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	ufcli "github.com/urfave/cli/v3"
 	"github.com/mholtzscher/github-janitor/internal/cli"
+	ufcli "github.com/urfave/cli/v3"
 )
 
 // NewCommand creates the example command.

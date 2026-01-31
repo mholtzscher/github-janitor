@@ -1,17 +1,40 @@
 # Test github-janitor help
 exec github-janitor --help
-stdout 'Usage:'
+stdout 'USAGE:'
 stdout 'github-janitor'
 ! stderr .
 
---
 # Test github-janitor version
 exec github-janitor --version
 stdout '0.1.0'
 ! stderr .
 
---
-# Test validate command shows authentication error
-exec github-janitor validate
+# Test validate command shows configuration error
+! exec github-janitor validate --config missing.yaml
+stdout 'Validating configuration'
 stderr 'configuration error'
-! stdout .
+
+# Test init creates a config file
+exec github-janitor init --config example.yaml
+exists example.yaml
+! stderr .
+
+# Test init refuses to overwrite existing config
+! exec github-janitor init --config example.yaml
+stderr 'config file already exists'
+
+# Test init config alias flag
+exec github-janitor init -c alias.yaml
+exists alias.yaml
+! stderr .
+
+# Test help for a subcommand
+exec github-janitor help init
+stdout 'Generate an example configuration file'
+! stderr .
+
+# Test config env var
+env GITHUB_JANITOR_CONFIG=env.yaml
+exec github-janitor init
+exists env.yaml
+! stderr .
