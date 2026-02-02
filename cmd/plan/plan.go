@@ -96,7 +96,7 @@ func printResults(results []sync.Result) {
 		}
 
 		for _, change := range result.Changes {
-			arrow := common.Yellow("→")
+			arrow := common.Yellow("→ ")
 			if reflect.DeepEqual(change.Current, change.Desired) {
 				arrow = "="
 			}
