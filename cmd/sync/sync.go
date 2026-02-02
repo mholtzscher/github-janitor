@@ -7,7 +7,6 @@ import (
 	"reflect"
 
 	"github.com/mholtzscher/github-janitor/cmd/common"
-	"github.com/mholtzscher/github-janitor/internal/cli"
 	"github.com/mholtzscher/github-janitor/internal/config"
 	"github.com/mholtzscher/github-janitor/internal/github"
 	"github.com/mholtzscher/github-janitor/internal/sync"
@@ -77,12 +76,12 @@ func runSync(ctx context.Context, cmd *ufcli.Command, dryRun bool) error {
 	}
 
 	// Print results
-	printResults(results, cli.GlobalOptionsFromContext(ctx))
+	printResults(results)
 
 	return nil
 }
 
-func printResults(results []sync.Result, opts cli.GlobalOptions) {
+func printResults(results []sync.Result) {
 	fmt.Println("\n" + common.BoldWhite(common.Repeat("=", 60)))
 	fmt.Println(common.BoldWhite("SYNC RESULTS"))
 	fmt.Println(common.BoldWhite(common.Repeat("=", 60)))

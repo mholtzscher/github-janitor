@@ -9,7 +9,6 @@ import (
 	"github.com/mholtzscher/github-janitor/cmd/plan"
 	"github.com/mholtzscher/github-janitor/cmd/sync"
 	"github.com/mholtzscher/github-janitor/cmd/validate"
-	"github.com/mholtzscher/github-janitor/internal/cli"
 	ufcli "github.com/urfave/cli/v3"
 )
 
@@ -23,22 +22,14 @@ func Run(ctx context.Context, args []string) error {
 		Usage:   "Synchronize GitHub repository settings across multiple repos",
 		Version: Version,
 		Before: func(ctx context.Context, cmd *ufcli.Command) (context.Context, error) {
-			opts := cli.GlobalOptions{
-				Verbose: cmd.Bool(cli.FlagVerbose),
-				NoColor: cmd.Bool(cli.FlagNoColor),
-			}
-			if opts.NoColor {
+			if cmd.Bool("no-color") {
 				color.NoColor = true
 			}
-			return cli.WithGlobalOptions(ctx, opts), nil
+			return ctx, nil
 		},
 		Flags: []ufcli.Flag{
 			&ufcli.BoolFlag{
-				Name:  cli.FlagVerbose,
-				Usage: "Print verbose output",
-			},
-			&ufcli.BoolFlag{
-				Name:  cli.FlagNoColor,
+				Name:  "no-color",
 				Usage: "Disable colored output",
 			},
 			&ufcli.StringFlag{

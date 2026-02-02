@@ -41,11 +41,8 @@ nix build
 # Show help
 github-janitor --help
 
-# Run example command
-github-janitor example
-
-# Run with verbose output
-github-janitor --verbose example
+	# Run example command
+	github-janitor example
 ```
 
 ## Development
