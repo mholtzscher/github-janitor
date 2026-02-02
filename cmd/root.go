@@ -10,6 +10,8 @@ import (
 	"github.com/mholtzscher/github-janitor/cmd/plan"
 	"github.com/mholtzscher/github-janitor/cmd/sync"
 	"github.com/mholtzscher/github-janitor/cmd/validate"
+	"github.com/mholtzscher/github-janitor/internal/config"
+	"github.com/mholtzscher/github-janitor/internal/github"
 	ufcli "github.com/urfave/cli/v3"
 )
 
@@ -36,7 +38,7 @@ func Run(ctx context.Context, args []string) error {
 			&ufcli.StringFlag{
 				Name:    common.FlagConfig,
 				Aliases: []string{"c"},
-				Value:   "github-janitor.yaml",
+				Value:   config.DefaultFilename,
 				Usage:   "Path to configuration file",
 				Sources: ufcli.EnvVars("GITHUB_JANITOR_CONFIG"),
 			},
@@ -44,7 +46,7 @@ func Run(ctx context.Context, args []string) error {
 				Name:    common.FlagToken,
 				Aliases: []string{"t"},
 				Usage:   "GitHub personal access token (overrides auto-detection)",
-				Sources: ufcli.EnvVars("GITHUB_TOKEN"),
+				Sources: ufcli.EnvVars(github.EnvToken),
 			},
 		},
 		Commands: []*ufcli.Command{

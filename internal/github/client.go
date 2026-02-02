@@ -3,12 +3,20 @@ package github
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/google/go-github/v82/github"
 	"golang.org/x/oauth2"
+)
+
+const (
+	EnvToken          = "GITHUB_TOKEN"
+	TokenSourceFlag   = "--token flag"
+	TokenSourceEnvVar = "GITHUB_TOKEN env var"
+	TokenSourceGhCLI  = "gh CLI"
 )
 
 // Client wraps the GitHub API client
@@ -29,7 +37,7 @@ func derefBool(v *bool) bool {
 // If token is empty, it attempts to auto-detect from gh CLI or GITHUB_TOKEN env var
 func NewClient(token string) (*Client, error) {
 	ctx := context.Background()
-	tokenSource := "--token flag"
+	tokenSource := TokenSourceFlag
 
 	// If no token provided, try to auto-detect
 	if token == "" {
@@ -56,16 +64,16 @@ func NewClient(token string) (*Client, error) {
 // detectToken attempts to find a GitHub token from various sources
 func detectToken() (string, string, error) {
 	// First, try GITHUB_TOKEN environment variable
-	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
-		return token, "GITHUB_TOKEN env var", nil
+	if token := os.Getenv(EnvToken); token != "" {
+		return token, TokenSourceEnvVar, nil
 	}
 
 	// Second, try to get token from gh CLI
 	if token, err := getGhCliToken(); err == nil && token != "" {
-		return token, "gh CLI", nil
+		return token, TokenSourceGhCLI, nil
 	}
 
-	return "", "", fmt.Errorf("no GitHub token found. Set GITHUB_TOKEN environment variable or authenticate with 'gh auth login'")
+	return "", "", fmt.Errorf("no GitHub token found. Set %s environment variable or authenticate with 'gh auth login'", EnvToken)
 }
 
 // getGhCliToken attempts to get a token from the GitHub CLI
@@ -84,7 +92,7 @@ func (c *Client) ValidateAuth() error {
 	if err != nil {
 		return fmt.Errorf("failed to authenticate: %w", err)
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("authentication failed with status: %d", resp.StatusCode)
 	}
 	return nil
@@ -145,7 +153,7 @@ type RepositoryInfo struct {
 func (c *Client) GetRepository(owner, name string) (*RepositoryInfo, error) {
 	repo, resp, err := c.client.Repositories.Get(c.ctx, owner, name)
 	if err != nil {
-		if resp != nil && resp.StatusCode == 404 {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return &RepositoryInfo{
 				Owner:  owner,
 				Name:   name,
@@ -281,7 +289,7 @@ type BranchProtectionInfo struct {
 func (c *Client) GetBranchProtection(owner, name, pattern string) (*BranchProtectionInfo, error) {
 	protection, resp, err := c.client.Repositories.GetBranchProtection(c.ctx, owner, name, pattern)
 	if err != nil {
-		if resp != nil && resp.StatusCode == 404 {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			// No protection exists
 			return &BranchProtectionInfo{
 				Enabled: false,

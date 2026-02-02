@@ -8,6 +8,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	DefaultFilename = "github-janitor.yaml"
+	DefaultFileMode = 0644
+
+	VisibilityPublic  = "public"
+	VisibilityPrivate = "private"
+
+	SquashTitlePRTitle         = "PR_TITLE"
+	SquashTitleCommitOrPRTitle = "COMMIT_OR_PR_TITLE"
+
+	SquashMessagePRBody         = "PR_BODY"
+	SquashMessageCommitMessages = "COMMIT_MESSAGES"
+	SquashMessageBlank          = "BLANK"
+
+	MergeTitlePRTitle      = "PR_TITLE"
+	MergeTitleMergeMessage = "MERGE_MESSAGE"
+
+	MergeMessagePRBody  = "PR_BODY"
+	MergeMessagePRTitle = "PR_TITLE"
+	MergeMessageBlank   = "BLANK"
+)
+
 // Config represents the complete configuration file
 type Config struct {
 	Repositories []Repository `yaml:"repositories"`
@@ -131,7 +153,7 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if c.Settings.Visibility != nil && *c.Settings.Visibility != "public" && *c.Settings.Visibility != "private" {
+	if c.Settings.Visibility != nil && *c.Settings.Visibility != VisibilityPublic && *c.Settings.Visibility != VisibilityPrivate {
 		return fmt.Errorf("invalid visibility: must be 'public' or 'private'")
 	}
 
@@ -149,7 +171,7 @@ func (c *Config) Validate() error {
 
 	// Validate squash merge commit title
 	if c.Settings.SquashMergeCommitTitle != nil {
-		valid := []string{"PR_TITLE", "COMMIT_OR_PR_TITLE"}
+		valid := []string{SquashTitlePRTitle, SquashTitleCommitOrPRTitle}
 		if !contains(valid, *c.Settings.SquashMergeCommitTitle) {
 			return fmt.Errorf("invalid squash_merge_commit_title: must be one of %v", valid)
 		}
@@ -157,7 +179,7 @@ func (c *Config) Validate() error {
 
 	// Validate squash merge commit message
 	if c.Settings.SquashMergeCommitMessage != nil {
-		valid := []string{"PR_BODY", "COMMIT_MESSAGES", "BLANK"}
+		valid := []string{SquashMessagePRBody, SquashMessageCommitMessages, SquashMessageBlank}
 		if !contains(valid, *c.Settings.SquashMergeCommitMessage) {
 			return fmt.Errorf("invalid squash_merge_commit_message: must be one of %v", valid)
 		}
@@ -165,7 +187,7 @@ func (c *Config) Validate() error {
 
 	// Validate merge commit title
 	if c.Settings.MergeCommitTitle != nil {
-		valid := []string{"PR_TITLE", "MERGE_MESSAGE"}
+		valid := []string{MergeTitlePRTitle, MergeTitleMergeMessage}
 		if !contains(valid, *c.Settings.MergeCommitTitle) {
 			return fmt.Errorf("invalid merge_commit_title: must be one of %v", valid)
 		}
@@ -173,7 +195,7 @@ func (c *Config) Validate() error {
 
 	// Validate merge commit message
 	if c.Settings.MergeCommitMessage != nil {
-		valid := []string{"PR_BODY", "PR_TITLE", "BLANK"}
+		valid := []string{MergeMessagePRBody, MergeMessagePRTitle, MergeMessageBlank}
 		if !contains(valid, *c.Settings.MergeCommitMessage) {
 			return fmt.Errorf("invalid merge_commit_message: must be one of %v", valid)
 		}

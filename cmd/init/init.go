@@ -32,7 +32,7 @@ func runInit(cmd *ufcli.Command) error {
 
 	// Write example config
 	exampleConfig := config.ExampleConfig()
-	if err := os.WriteFile(configPath, []byte(exampleConfig), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(exampleConfig), config.DefaultFileMode); err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
 
