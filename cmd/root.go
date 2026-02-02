@@ -35,7 +35,7 @@ func Run(ctx context.Context, args []string) error {
 			&ufcli.StringFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
-				Value:   ".github-janitor.yaml",
+				Value:   "github-janitor.yaml",
 				Usage:   "Path to configuration file",
 				Sources: ufcli.EnvVars("GITHUB_JANITOR_CONFIG"),
 			},

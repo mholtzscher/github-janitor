@@ -56,7 +56,7 @@ github-janitor sync
 
 ## Configuration
 
-Create a `.github-janitor.yaml` file to define your repositories and settings:
+Create a `github-janitor.yaml` file to define your repositories and settings:
 
 ```yaml
 repositories:
