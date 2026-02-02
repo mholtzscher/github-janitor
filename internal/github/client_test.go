@@ -27,8 +27,11 @@ func TestBuildProtectionRequest_StatusChecks(t *testing.T) {
 	if req.RequiredStatusChecks.Strict != false {
 		t.Fatalf("Strict = %v; want false", req.RequiredStatusChecks.Strict)
 	}
-	if len(req.RequiredStatusChecks.Contexts) != 1 || req.RequiredStatusChecks.Contexts[0] != "ci/test" {
+	if req.RequiredStatusChecks.Contexts == nil || len(*req.RequiredStatusChecks.Contexts) != 1 || (*req.RequiredStatusChecks.Contexts)[0] != "ci/test" {
 		t.Fatalf("Contexts = %v; want [ci/test]", req.RequiredStatusChecks.Contexts)
+	}
+	if req.RequiredStatusChecks.Checks == nil || len(*req.RequiredStatusChecks.Checks) != 0 {
+		t.Fatalf("Checks = %v; want empty slice", req.RequiredStatusChecks.Checks)
 	}
 
 	if req.RequiredPullRequestReviews == nil {

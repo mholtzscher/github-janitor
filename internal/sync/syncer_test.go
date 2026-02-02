@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	gogithub "github.com/google/go-github/v57/github"
+	gogithub "github.com/google/go-github/v82/github"
 
 	"github.com/mholtzscher/github-janitor/internal/config"
 	"github.com/mholtzscher/github-janitor/internal/github"

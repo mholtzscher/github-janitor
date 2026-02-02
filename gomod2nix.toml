@@ -4,9 +4,9 @@ schema = 3
   [mod."github.com/fatih/color"]
     version = "v1.18.0"
     hash = "sha256-pP5y72FSbi4j/BjyVq/XbAOFjzNjMxZt2R/lFFxGWvY="
-  [mod."github.com/google/go-github/v57"]
-    version = "v57.0.0"
-    hash = "sha256-ak3QrhL4a763Omr5Hj/MewYNIbiJ8ooRXdOOInFRVUM="
+  [mod."github.com/google/go-github/v82"]
+    version = "v82.0.0"
+    hash = "sha256-cCZzbzsAtXVIBSmWgCQzZzu2Qdd//4aYKnbHl0YUJdA="
   [mod."github.com/google/go-querystring"]
     version = "v1.2.0"
     hash = "sha256-F/Ve4oDaEqho8RryvdGSRR22/DbYHWZQa6M60n6oSYM="

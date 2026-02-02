@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v82/github"
 	"golang.org/x/oauth2"
 )
 
@@ -303,8 +303,12 @@ func (c *Client) GetBranchProtection(owner, name, pattern string) (*BranchProtec
 	if protection.RequiredStatusChecks != nil {
 		info.StatusChecksEnabled = true
 		info.RequireBranchesUpToDate = protection.RequiredStatusChecks.Strict
-		info.StatusCheckContexts = protection.RequiredStatusChecks.Contexts
-		info.StatusCheckChecks = protection.RequiredStatusChecks.Checks
+		if protection.RequiredStatusChecks.Contexts != nil {
+			info.StatusCheckContexts = *protection.RequiredStatusChecks.Contexts
+		}
+		if protection.RequiredStatusChecks.Checks != nil {
+			info.StatusCheckChecks = *protection.RequiredStatusChecks.Checks
+		}
 	}
 
 	// Set enhanced protection fields
@@ -389,10 +393,31 @@ func buildProtectionRequest(protection *BranchProtectionInfo) *github.Protection
 
 	var reqChecks *github.RequiredStatusChecks
 	if protection.StatusChecksEnabled {
+		var contexts *[]string
+		var checks *[]*github.RequiredStatusCheck
+
+		hasContexts := len(protection.StatusCheckContexts) > 0
+		hasChecks := len(protection.StatusCheckChecks) > 0
+
+		switch {
+		case hasContexts && !hasChecks:
+			// If we set contexts explicitly, also clear any existing checks.
+			contexts = &protection.StatusCheckContexts
+			emptyChecks := []*github.RequiredStatusCheck{}
+			checks = &emptyChecks
+		case hasChecks && !hasContexts:
+			// If we set checks explicitly, also clear any existing contexts.
+			checks = &protection.StatusCheckChecks
+			emptyContexts := []string{}
+			contexts = &emptyContexts
+		case hasContexts && hasChecks:
+			contexts = &protection.StatusCheckContexts
+			checks = &protection.StatusCheckChecks
+		}
 		reqChecks = &github.RequiredStatusChecks{
 			Strict:   protection.RequireBranchesUpToDate,
-			Contexts: protection.StatusCheckContexts,
-			Checks:   protection.StatusCheckChecks,
+			Contexts: contexts,
+			Checks:   checks,
 		}
 	}
 
