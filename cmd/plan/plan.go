@@ -25,8 +25,8 @@ func NewCommand() *ufcli.Command {
 }
 
 func runPlan(ctx context.Context, cmd *ufcli.Command) error {
-	configPath := cmd.String("config")
-	token := cmd.String("token")
+	configPath := cmd.String(common.FlagConfig)
+	token := cmd.String(common.FlagToken)
 
 	// Load configuration
 	cfg, err := config.Load(configPath)

@@ -20,19 +20,19 @@ func NewCommand() *ufcli.Command {
 		Usage: "Apply settings to all configured repositories",
 		Flags: []ufcli.Flag{
 			&ufcli.BoolFlag{
-				Name:  "dry-run",
+				Name:  common.FlagDryRun,
 				Usage: "Preview changes without applying them",
 			},
 		},
 		Action: func(ctx context.Context, cmd *ufcli.Command) error {
-			return runSync(ctx, cmd, cmd.Bool("dry-run"))
+			return runSync(ctx, cmd, cmd.Bool(common.FlagDryRun))
 		},
 	}
 }
 
 func runSync(ctx context.Context, cmd *ufcli.Command, dryRun bool) error {
-	configPath := cmd.String("config")
-	token := cmd.String("token")
+	configPath := cmd.String(common.FlagConfig)
+	token := cmd.String(common.FlagToken)
 
 	// Load configuration
 	cfg, err := config.Load(configPath)

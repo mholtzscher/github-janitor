@@ -23,8 +23,8 @@ func NewCommand() *ufcli.Command {
 }
 
 func runValidate(cmd *ufcli.Command) error {
-	configPath := cmd.String("config")
-	token := cmd.String("token")
+	configPath := cmd.String(common.FlagConfig)
+	token := cmd.String(common.FlagToken)
 
 	fmt.Println(common.Cyan("Validating configuration..."))
 

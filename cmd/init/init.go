@@ -23,7 +23,7 @@ func NewCommand() *ufcli.Command {
 }
 
 func runInit(cmd *ufcli.Command) error {
-	configPath := cmd.String("config")
+	configPath := cmd.String(common.FlagConfig)
 
 	// Check if file already exists
 	if _, err := os.Stat(configPath); err == nil {

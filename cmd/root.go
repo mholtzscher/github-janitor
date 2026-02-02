@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/fatih/color"
+	"github.com/mholtzscher/github-janitor/cmd/common"
 	initcmd "github.com/mholtzscher/github-janitor/cmd/init"
 	"github.com/mholtzscher/github-janitor/cmd/plan"
 	"github.com/mholtzscher/github-janitor/cmd/sync"
@@ -22,25 +23,25 @@ func Run(ctx context.Context, args []string) error {
 		Usage:   "Synchronize GitHub repository settings across multiple repos",
 		Version: Version,
 		Before: func(ctx context.Context, cmd *ufcli.Command) (context.Context, error) {
-			if cmd.Bool("no-color") {
+			if cmd.Bool(common.FlagNoColor) {
 				color.NoColor = true
 			}
 			return ctx, nil
 		},
 		Flags: []ufcli.Flag{
 			&ufcli.BoolFlag{
-				Name:  "no-color",
+				Name:  common.FlagNoColor,
 				Usage: "Disable colored output",
 			},
 			&ufcli.StringFlag{
-				Name:    "config",
+				Name:    common.FlagConfig,
 				Aliases: []string{"c"},
 				Value:   "github-janitor.yaml",
 				Usage:   "Path to configuration file",
 				Sources: ufcli.EnvVars("GITHUB_JANITOR_CONFIG"),
 			},
 			&ufcli.StringFlag{
-				Name:    "token",
+				Name:    common.FlagToken,
 				Aliases: []string{"t"},
 				Usage:   "GitHub personal access token (overrides auto-detection)",
 				Sources: ufcli.EnvVars("GITHUB_TOKEN"),
