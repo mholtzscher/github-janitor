@@ -47,7 +47,7 @@ brews:
       token: "{{ .Env.PAT }}"
     directory: Formula
     homepage: "https://github.com/mholtzscher/github-janitor"
-    description: "A Go CLI tool built with Nix"
+    description: "Cleanup and Sync GitHub Repository Settings"
     license: "MIT"
     install: |
       bin.install "github-janitor"
