@@ -49,7 +49,7 @@ func runPlan(ctx context.Context, cmd *ufcli.Command) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Authenticated as: %s\n\n", common.Cyan(user))
+	fmt.Printf("Authenticated as: %s (token from: %s)\n\n", common.Cyan(user), common.Cyan(client.TokenSource))
 
 	// Create syncer
 	syncer := sync.NewSyncer(client, cfg)

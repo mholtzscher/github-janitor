@@ -52,7 +52,7 @@ func runValidate(cmd *ufcli.Command) error {
 		return err
 	}
 
-	fmt.Printf("Authentication valid: authenticated as %s\n", common.Cyan(user))
+	fmt.Printf("Authentication valid: authenticated as %s (token from: %s)\n", common.Cyan(user), common.Cyan(client.TokenSource))
 	fmt.Println("\n" + common.Green("All validations passed!"))
 
 	return nil

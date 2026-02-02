@@ -13,8 +13,9 @@ import (
 
 // Client wraps the GitHub API client
 type Client struct {
-	client *github.Client
-	ctx    context.Context
+	client      *github.Client
+	ctx         context.Context
+	TokenSource string
 }
 
 func derefBool(v *bool) bool {
@@ -28,11 +29,12 @@ func derefBool(v *bool) bool {
 // If token is empty, it attempts to auto-detect from gh CLI or GITHUB_TOKEN env var
 func NewClient(token string) (*Client, error) {
 	ctx := context.Background()
+	tokenSource := "--token flag"
 
 	// If no token provided, try to auto-detect
 	if token == "" {
 		var err error
-		token, err = detectToken()
+		token, tokenSource, err = detectToken()
 		if err != nil {
 			return nil, err
 		}
@@ -45,24 +47,25 @@ func NewClient(token string) (*Client, error) {
 	client := github.NewClient(tc)
 
 	return &Client{
-		client: client,
-		ctx:    ctx,
+		client:      client,
+		ctx:         ctx,
+		TokenSource: tokenSource,
 	}, nil
 }
 
 // detectToken attempts to find a GitHub token from various sources
-func detectToken() (string, error) {
+func detectToken() (string, string, error) {
 	// First, try GITHUB_TOKEN environment variable
 	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
-		return token, nil
+		return token, "GITHUB_TOKEN env var", nil
 	}
 
 	// Second, try to get token from gh CLI
 	if token, err := getGhCliToken(); err == nil && token != "" {
-		return token, nil
+		return token, "gh CLI", nil
 	}
 
-	return "", fmt.Errorf("no GitHub token found. Set GITHUB_TOKEN environment variable or authenticate with 'gh auth login'")
+	return "", "", fmt.Errorf("no GitHub token found. Set GITHUB_TOKEN environment variable or authenticate with 'gh auth login'")
 }
 
 // getGhCliToken attempts to get a token from the GitHub CLI
