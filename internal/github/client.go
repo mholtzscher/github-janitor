@@ -109,6 +109,16 @@ type RepositoryInfo struct {
 	Private          bool
 	Exists           bool
 
+	// Repository metadata
+	Description string
+	Homepage    string
+	Topics      []string
+
+	// Repository settings
+	DefaultBranch      string
+	AllowAutoMerge     bool
+	GitHubPagesEnabled bool
+
 	// New repository settings
 	DeleteBranchOnMerge      bool
 	SquashMergeCommitTitle   string
@@ -150,6 +160,30 @@ func (c *Client) GetRepository(owner, name string) (*RepositoryInfo, error) {
 		AllowRebaseMerge: derefBool(repo.AllowRebaseMerge),
 		Private:          derefBool(repo.Private),
 		Exists:           true,
+	}
+
+	// Set repository metadata fields
+	if repo.Description != nil {
+		info.Description = *repo.Description
+	}
+	if repo.Homepage != nil {
+		info.Homepage = *repo.Homepage
+	}
+	if repo.Topics != nil {
+		info.Topics = repo.Topics
+	}
+
+	// Set repository settings fields
+	if repo.DefaultBranch != nil {
+		info.DefaultBranch = *repo.DefaultBranch
+	}
+	if repo.AllowAutoMerge != nil {
+		info.AllowAutoMerge = *repo.AllowAutoMerge
+	}
+
+	// Set GitHub Pages status
+	if repo.HasPages != nil {
+		info.GitHubPagesEnabled = *repo.HasPages
 	}
 
 	// Set new fields if they exist in the API response

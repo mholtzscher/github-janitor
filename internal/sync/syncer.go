@@ -160,6 +160,21 @@ func (s *Syncer) syncRepository(repo config.Repository, dryRun bool) Result {
 	changed = applySetting(&result, "merge_commit_title", s.config.Settings.MergeCommitTitle, current.MergeCommitTitle, &patch.MergeCommitTitle) || changed
 	changed = applySetting(&result, "merge_commit_message", s.config.Settings.MergeCommitMessage, current.MergeCommitMessage, &patch.MergeCommitMessage) || changed
 
+	// Track repository metadata
+	changed = applySetting(&result, "description", s.config.Settings.Description, current.Description, &patch.Description) || changed
+	changed = applySetting(&result, "homepage", s.config.Settings.Homepage, current.Homepage, &patch.Homepage) || changed
+
+	// Track topics (special case: slice)
+	if len(s.config.Settings.Topics) > 0 {
+		changed = applyDesiredStringSlice(&result, "topics", s.config.Settings.Topics, &patch.Topics) || changed
+	}
+
+	// Track default branch
+	changed = applySetting(&result, "default_branch", s.config.Settings.DefaultBranch, current.DefaultBranch, &patch.DefaultBranch) || changed
+
+	// Track auto-merge setting
+	changed = applySetting(&result, "allow_auto_merge", s.config.Settings.AllowAutoMerge, current.AllowAutoMerge, &patch.AllowAutoMerge) || changed
+
 	// Track visibility (special case: maps string to bool)
 	if s.config.Settings.Visibility != nil {
 		desiredPrivate := *s.config.Settings.Visibility == "private"
@@ -179,6 +194,21 @@ func (s *Syncer) syncRepository(repo config.Repository, dryRun bool) Result {
 		if err := s.client.UpdateRepositorySettings(repo.Owner, repo.Name, patch); err != nil {
 			result.Error = fmt.Errorf("failed to update settings: %w", err)
 			return result
+		}
+	}
+
+	// Handle GitHub Pages separately (requires different API)
+	if s.config.Settings.GitHubPages != nil && s.config.Settings.GitHubPages.Enabled != nil {
+		desiredPagesEnabled := *s.config.Settings.GitHubPages.Enabled
+		if current.GitHubPagesEnabled != desiredPagesEnabled {
+			// GitHub Pages requires a separate API call to enable/disable
+			// For now, we track the change but don't apply it automatically
+			result.Changes = append(result.Changes, Change{
+				Field:   "github_pages",
+				Current: current.GitHubPagesEnabled,
+				Desired: desiredPagesEnabled,
+			})
+			result.Error = fmt.Errorf("GitHub Pages must be configured manually (API limitation): visit https://github.com/%s/%s/settings/pages", repo.Owner, repo.Name)
 		}
 	}
 

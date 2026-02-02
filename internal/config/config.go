@@ -53,7 +53,24 @@ type Settings struct {
 	WebCommitSignoffRequired *bool `yaml:"web_commit_signoff_required,omitempty"`
 	AllowForking             *bool `yaml:"allow_forking,omitempty"`
 
+	// Repository metadata
+	Description *string  `yaml:"description,omitempty"`
+	Homepage    *string  `yaml:"homepage,omitempty"`
+	Topics      []string `yaml:"topics,omitempty"`
+
+	// Repository settings
+	DefaultBranch  *string `yaml:"default_branch,omitempty"`
+	AllowAutoMerge *bool   `yaml:"allow_auto_merge,omitempty"`
+
+	// GitHub Pages
+	GitHubPages *GitHubPages `yaml:"github_pages,omitempty"`
+
 	BranchProtection *BranchProtection `yaml:"branch_protection,omitempty"`
+}
+
+// GitHubPages represents GitHub Pages configuration
+type GitHubPages struct {
+	Enabled *bool `yaml:"enabled,omitempty"`
 }
 
 // BranchProtection represents branch protection settings
@@ -205,6 +222,19 @@ settings:
   allow_update_branch: true
   web_commit_signoff_required: false
   allow_forking: true
+
+  # Repository metadata
+  description: "A brief description of the repository"
+  homepage: "https://example.com"
+  topics: ["go", "cli", "automation"]
+
+  # Repository settings
+  default_branch: "main"
+  allow_auto_merge: false
+
+  # GitHub Pages (note: enabling requires manual configuration)
+  github_pages:
+    enabled: false
 
   # Branch protection (applied to all repos)
   branch_protection:
