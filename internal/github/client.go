@@ -125,90 +125,8 @@ type RepositoryInfo struct {
 	AllowForking             bool
 }
 
-// RepositorySettingsPatch represents a partial repository settings update.
-// Nil fields are not sent to the GitHub API.
-type RepositorySettingsPatch struct {
-	AllowMergeCommit    *bool
-	AllowSquashMerge    *bool
-	AllowRebaseMerge    *bool
-	Private             *bool
-	DeleteBranchOnMerge *bool
-
-	SquashMergeCommitTitle   *string
-	SquashMergeCommitMessage *string
-	MergeCommitTitle         *string
-	MergeCommitMessage       *string
-
-	HasIssues                *bool
-	HasProjects              *bool
-	HasWiki                  *bool
-	HasDiscussions           *bool
-	Archived                 *bool
-	AllowUpdateBranch        *bool
-	WebCommitSignoffRequired *bool
-	AllowForking             *bool
-}
-
-func buildRepositoryEditRequest(patch *RepositorySettingsPatch) *github.Repository {
-	repo := &github.Repository{}
-	if patch == nil {
-		return repo
-	}
-
-	if patch.AllowMergeCommit != nil {
-		repo.AllowMergeCommit = patch.AllowMergeCommit
-	}
-	if patch.AllowSquashMerge != nil {
-		repo.AllowSquashMerge = patch.AllowSquashMerge
-	}
-	if patch.AllowRebaseMerge != nil {
-		repo.AllowRebaseMerge = patch.AllowRebaseMerge
-	}
-	if patch.Private != nil {
-		repo.Private = patch.Private
-	}
-	if patch.DeleteBranchOnMerge != nil {
-		repo.DeleteBranchOnMerge = patch.DeleteBranchOnMerge
-	}
-	if patch.SquashMergeCommitTitle != nil {
-		repo.SquashMergeCommitTitle = patch.SquashMergeCommitTitle
-	}
-	if patch.SquashMergeCommitMessage != nil {
-		repo.SquashMergeCommitMessage = patch.SquashMergeCommitMessage
-	}
-	if patch.MergeCommitTitle != nil {
-		repo.MergeCommitTitle = patch.MergeCommitTitle
-	}
-	if patch.MergeCommitMessage != nil {
-		repo.MergeCommitMessage = patch.MergeCommitMessage
-	}
-	if patch.HasIssues != nil {
-		repo.HasIssues = patch.HasIssues
-	}
-	if patch.HasProjects != nil {
-		repo.HasProjects = patch.HasProjects
-	}
-	if patch.HasWiki != nil {
-		repo.HasWiki = patch.HasWiki
-	}
-	if patch.HasDiscussions != nil {
-		repo.HasDiscussions = patch.HasDiscussions
-	}
-	if patch.Archived != nil {
-		repo.Archived = patch.Archived
-	}
-	if patch.AllowUpdateBranch != nil {
-		repo.AllowUpdateBranch = patch.AllowUpdateBranch
-	}
-	if patch.WebCommitSignoffRequired != nil {
-		repo.WebCommitSignoffRequired = patch.WebCommitSignoffRequired
-	}
-	if patch.AllowForking != nil {
-		repo.AllowForking = patch.AllowForking
-	}
-
-	return repo
-}
+// Repository settings updates use go-github's *github.Repository directly.
+// Nil pointer fields are not sent to the GitHub API.
 
 // GetRepository fetches information about a repository
 func (c *Client) GetRepository(owner, name string) (*RepositoryInfo, error) {
@@ -279,11 +197,13 @@ func (c *Client) GetRepository(owner, name string) (*RepositoryInfo, error) {
 }
 
 // UpdateRepositorySettings updates repository settings.
-// Only non-nil fields in patch are sent to the GitHub API.
-func (c *Client) UpdateRepositorySettings(owner, name string, patch *RepositorySettingsPatch) error {
-	repo := buildRepositoryEditRequest(patch)
+// Only non-nil pointer fields in patch are sent to the GitHub API.
+func (c *Client) UpdateRepositorySettings(owner, name string, patch *github.Repository) error {
+	if patch == nil {
+		patch = &github.Repository{}
+	}
 
-	_, _, err := c.client.Repositories.Edit(c.ctx, owner, name, repo)
+	_, _, err := c.client.Repositories.Edit(c.ctx, owner, name, patch)
 	if err != nil {
 		return fmt.Errorf("failed to update repository %s/%s: %w", owner, name, err)
 	}
@@ -459,20 +379,15 @@ func buildProtectionRequest(protection *BranchProtectionInfo) *github.Protection
 		restrictions = &github.BranchRestrictionsRequest{Users: users, Teams: teams, Apps: apps}
 	}
 
-	requireLinearHistory := protection.RequireLinearHistory
-	allowForcePushes := protection.AllowForcePushes
-	allowDeletions := protection.AllowDeletions
-	requireConversationResolution := protection.RequireConversationResolution
-
 	return &github.ProtectionRequest{
 		RequiredStatusChecks:           reqChecks,
 		RequiredPullRequestReviews:     reqReviews,
 		EnforceAdmins:                  protection.IncludeAdmins,
 		Restrictions:                   restrictions,
-		RequireLinearHistory:           &requireLinearHistory,
-		AllowForcePushes:               &allowForcePushes,
-		AllowDeletions:                 &allowDeletions,
-		RequiredConversationResolution: &requireConversationResolution,
+		RequireLinearHistory:           &protection.RequireLinearHistory,
+		AllowForcePushes:               &protection.AllowForcePushes,
+		AllowDeletions:                 &protection.AllowDeletions,
+		RequiredConversationResolution: &protection.RequireConversationResolution,
 	}
 }
 

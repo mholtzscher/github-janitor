@@ -4,21 +4,89 @@ import (
 	"fmt"
 	"reflect"
 
+	gogithub "github.com/google/go-github/v57/github"
+
 	"github.com/mholtzscher/github-janitor/internal/config"
 	"github.com/mholtzscher/github-janitor/internal/github"
 )
 
 // Syncer orchestrates the synchronization of repository settings
 type Syncer struct {
-	client *github.Client
+	client githubAPI
 	config *config.Config
+}
+
+type githubAPI interface {
+	GetRepository(owner, name string) (*github.RepositoryInfo, error)
+	UpdateRepositorySettings(owner, name string, patch *gogithub.Repository) error
+	GetBranchProtection(owner, name, pattern string) (*github.BranchProtectionInfo, error)
+	UpdateBranchProtection(owner, name string, protection *github.BranchProtectionInfo) error
 }
 
 // Change represents a single setting change
 type Change struct {
 	Field   string
-	Current interface{}
-	Desired interface{}
+	Current any
+	Desired any
+}
+
+// applySetting updates the API patch (when configured) and tracks changes.
+// Returns true if a change was detected.
+func applySetting[T comparable](result *Result, field string, configured *T, current T, patchField **T) bool {
+	if configured == nil {
+		return false
+	}
+
+	*patchField = configured
+
+	if current != *configured {
+		result.Changes = append(result.Changes, Change{
+			Field:   field,
+			Current: current,
+			Desired: *configured,
+		})
+		return true
+	}
+
+	return false
+}
+
+// applyDesiredSetting applies an optional config value to a desired target and tracks changes.
+// Returns true if a change was detected.
+func applyDesiredSetting[T comparable](result *Result, field string, configured *T, desired *T) bool {
+	if configured == nil {
+		return false
+	}
+
+	if *desired != *configured {
+		result.Changes = append(result.Changes, Change{
+			Field:   field,
+			Current: *desired,
+			Desired: *configured,
+		})
+		*desired = *configured
+		return true
+	}
+
+	return false
+}
+
+func applyDesiredStringSlice(result *Result, field string, configured []string, desired *[]string) bool {
+	if len(configured) == 0 {
+		return false
+	}
+
+	changed := !reflect.DeepEqual(*desired, configured)
+	if changed {
+		result.Changes = append(result.Changes, Change{
+			Field:   field,
+			Current: *desired,
+			Desired: configured,
+		})
+	}
+
+	*desired = append([]string(nil), configured...)
+	return changed
 }
 
 // Result represents the result of syncing a single repository
@@ -70,145 +138,38 @@ func (s *Syncer) syncRepository(repo config.Repository, dryRun bool) Result {
 
 	result.Exists = true
 
-	patch := &github.RepositorySettingsPatch{}
-	changed := false
+	patch := &gogithub.Repository{}
+	changed := applySetting(&result, "allow_merge_commit", s.config.Settings.AllowMergeCommit, current.AllowMergeCommit, &patch.AllowMergeCommit)
 
-	if s.config.Settings.AllowMergeCommit != nil {
-		desired := *s.config.Settings.AllowMergeCommit
-		patch.AllowMergeCommit = &desired
-		if current.AllowMergeCommit != desired {
-			result.Changes = append(result.Changes, Change{Field: "allow_merge_commit", Current: current.AllowMergeCommit, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.AllowSquashMerge != nil {
-		desired := *s.config.Settings.AllowSquashMerge
-		patch.AllowSquashMerge = &desired
-		if current.AllowSquashMerge != desired {
-			result.Changes = append(result.Changes, Change{Field: "allow_squash_merge", Current: current.AllowSquashMerge, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.AllowRebaseMerge != nil {
-		desired := *s.config.Settings.AllowRebaseMerge
-		patch.AllowRebaseMerge = &desired
-		if current.AllowRebaseMerge != desired {
-			result.Changes = append(result.Changes, Change{Field: "allow_rebase_merge", Current: current.AllowRebaseMerge, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.DeleteBranchOnMerge != nil {
-		desired := *s.config.Settings.DeleteBranchOnMerge
-		patch.DeleteBranchOnMerge = &desired
-		if current.DeleteBranchOnMerge != desired {
-			result.Changes = append(result.Changes, Change{Field: "delete_branch_on_merge", Current: current.DeleteBranchOnMerge, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.SquashMergeCommitTitle != nil {
-		desired := *s.config.Settings.SquashMergeCommitTitle
-		patch.SquashMergeCommitTitle = &desired
-		if current.SquashMergeCommitTitle != desired {
-			result.Changes = append(result.Changes, Change{Field: "squash_merge_commit_title", Current: current.SquashMergeCommitTitle, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.SquashMergeCommitMessage != nil {
-		desired := *s.config.Settings.SquashMergeCommitMessage
-		patch.SquashMergeCommitMessage = &desired
-		if current.SquashMergeCommitMessage != desired {
-			result.Changes = append(result.Changes, Change{Field: "squash_merge_commit_message", Current: current.SquashMergeCommitMessage, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.MergeCommitTitle != nil {
-		desired := *s.config.Settings.MergeCommitTitle
-		patch.MergeCommitTitle = &desired
-		if current.MergeCommitTitle != desired {
-			result.Changes = append(result.Changes, Change{Field: "merge_commit_title", Current: current.MergeCommitTitle, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.MergeCommitMessage != nil {
-		desired := *s.config.Settings.MergeCommitMessage
-		patch.MergeCommitMessage = &desired
-		if current.MergeCommitMessage != desired {
-			result.Changes = append(result.Changes, Change{Field: "merge_commit_message", Current: current.MergeCommitMessage, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.HasIssues != nil {
-		desired := *s.config.Settings.HasIssues
-		patch.HasIssues = &desired
-		if current.HasIssues != desired {
-			result.Changes = append(result.Changes, Change{Field: "has_issues", Current: current.HasIssues, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.HasProjects != nil {
-		desired := *s.config.Settings.HasProjects
-		patch.HasProjects = &desired
-		if current.HasProjects != desired {
-			result.Changes = append(result.Changes, Change{Field: "has_projects", Current: current.HasProjects, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.HasWiki != nil {
-		desired := *s.config.Settings.HasWiki
-		patch.HasWiki = &desired
-		if current.HasWiki != desired {
-			result.Changes = append(result.Changes, Change{Field: "has_wiki", Current: current.HasWiki, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.HasDiscussions != nil {
-		desired := *s.config.Settings.HasDiscussions
-		patch.HasDiscussions = &desired
-		if current.HasDiscussions != desired {
-			result.Changes = append(result.Changes, Change{Field: "has_discussions", Current: current.HasDiscussions, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.Archived != nil {
-		desired := *s.config.Settings.Archived
-		patch.Archived = &desired
-		if current.Archived != desired {
-			result.Changes = append(result.Changes, Change{Field: "archived", Current: current.Archived, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.AllowUpdateBranch != nil {
-		desired := *s.config.Settings.AllowUpdateBranch
-		patch.AllowUpdateBranch = &desired
-		if current.AllowUpdateBranch != desired {
-			result.Changes = append(result.Changes, Change{Field: "allow_update_branch", Current: current.AllowUpdateBranch, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.WebCommitSignoffRequired != nil {
-		desired := *s.config.Settings.WebCommitSignoffRequired
-		patch.WebCommitSignoffRequired = &desired
-		if current.WebCommitSignoffRequired != desired {
-			result.Changes = append(result.Changes, Change{Field: "web_commit_signoff_required", Current: current.WebCommitSignoffRequired, Desired: desired})
-			changed = true
-		}
-	}
-	if s.config.Settings.AllowForking != nil {
-		desired := *s.config.Settings.AllowForking
-		patch.AllowForking = &desired
-		if current.AllowForking != desired {
-			result.Changes = append(result.Changes, Change{Field: "allow_forking", Current: current.AllowForking, Desired: desired})
-			changed = true
-		}
-	}
+	// Track boolean settings
+	changed = applySetting(&result, "allow_squash_merge", s.config.Settings.AllowSquashMerge, current.AllowSquashMerge, &patch.AllowSquashMerge) || changed
+	changed = applySetting(&result, "allow_rebase_merge", s.config.Settings.AllowRebaseMerge, current.AllowRebaseMerge, &patch.AllowRebaseMerge) || changed
+	changed = applySetting(&result, "delete_branch_on_merge", s.config.Settings.DeleteBranchOnMerge, current.DeleteBranchOnMerge, &patch.DeleteBranchOnMerge) || changed
+	changed = applySetting(&result, "has_issues", s.config.Settings.HasIssues, current.HasIssues, &patch.HasIssues) || changed
+	changed = applySetting(&result, "has_projects", s.config.Settings.HasProjects, current.HasProjects, &patch.HasProjects) || changed
+	changed = applySetting(&result, "has_wiki", s.config.Settings.HasWiki, current.HasWiki, &patch.HasWiki) || changed
+	changed = applySetting(&result, "has_discussions", s.config.Settings.HasDiscussions, current.HasDiscussions, &patch.HasDiscussions) || changed
+	changed = applySetting(&result, "archived", s.config.Settings.Archived, current.Archived, &patch.Archived) || changed
+	changed = applySetting(&result, "allow_update_branch", s.config.Settings.AllowUpdateBranch, current.AllowUpdateBranch, &patch.AllowUpdateBranch) || changed
+	changed = applySetting(&result, "web_commit_signoff_required", s.config.Settings.WebCommitSignoffRequired, current.WebCommitSignoffRequired, &patch.WebCommitSignoffRequired) || changed
+	changed = applySetting(&result, "allow_forking", s.config.Settings.AllowForking, current.AllowForking, &patch.AllowForking) || changed
+
+	// Track string settings
+	changed = applySetting(&result, "squash_merge_commit_title", s.config.Settings.SquashMergeCommitTitle, current.SquashMergeCommitTitle, &patch.SquashMergeCommitTitle) || changed
+	changed = applySetting(&result, "squash_merge_commit_message", s.config.Settings.SquashMergeCommitMessage, current.SquashMergeCommitMessage, &patch.SquashMergeCommitMessage) || changed
+	changed = applySetting(&result, "merge_commit_title", s.config.Settings.MergeCommitTitle, current.MergeCommitTitle, &patch.MergeCommitTitle) || changed
+	changed = applySetting(&result, "merge_commit_message", s.config.Settings.MergeCommitMessage, current.MergeCommitMessage, &patch.MergeCommitMessage) || changed
+
+	// Track visibility (special case: maps string to bool)
 	if s.config.Settings.Visibility != nil {
 		desiredPrivate := *s.config.Settings.Visibility == "private"
 		patch.Private = &desiredPrivate
 		if current.Private != desiredPrivate {
+			visibilityMap := map[bool]string{true: "private", false: "public"}
 			result.Changes = append(result.Changes, Change{
 				Field:   "visibility",
-				Current: map[bool]string{true: "private", false: "public"}[current.Private],
-				Desired: map[bool]string{true: "private", false: "public"}[desiredPrivate],
+				Current: visibilityMap[current.Private],
+				Desired: visibilityMap[desiredPrivate],
 			})
 			changed = true
 		}
@@ -255,13 +216,16 @@ func (s *Syncer) syncBranchProtection(repo config.Repository, dryRun bool) Resul
 	desired.Pattern = pattern
 	desired.Enabled = bp.Enabled
 
+	changed := false
+
 	if current.Enabled != desired.Enabled {
 		result.Changes = append(result.Changes, Change{Field: "branch_protection", Current: map[bool]string{true: "enabled", false: "disabled"}[current.Enabled], Desired: map[bool]string{true: "enabled", false: "disabled"}[desired.Enabled]})
+		changed = true
 	}
 
 	// If branch protection is being disabled, the only action is removal.
 	if !bp.Enabled {
-		if !dryRun && len(result.Changes) > 0 {
+		if !dryRun && changed {
 			if err := s.client.UpdateBranchProtection(repo.Owner, repo.Name, &desired); err != nil {
 				result.Error = fmt.Errorf("failed to update branch protection: %w", err)
 			}
@@ -273,43 +237,19 @@ func (s *Syncer) syncBranchProtection(repo config.Repository, dryRun bool) Resul
 	if bp.RequiredReviews != nil || bp.DismissStaleReviews != nil || bp.RequireCodeOwnerReviews != nil {
 		desired.PullRequestReviewsEnabled = true
 	}
-	if bp.RequiredReviews != nil {
-		if desired.RequiredReviews != *bp.RequiredReviews {
-			result.Changes = append(result.Changes, Change{Field: "required_reviews", Current: desired.RequiredReviews, Desired: *bp.RequiredReviews})
-		}
-		desired.RequiredReviews = *bp.RequiredReviews
+	if current.PullRequestReviewsEnabled != desired.PullRequestReviewsEnabled {
+		result.Changes = append(result.Changes, Change{Field: "pull_request_reviews_enabled", Current: current.PullRequestReviewsEnabled, Desired: desired.PullRequestReviewsEnabled})
+		changed = true
 	}
-	if bp.DismissStaleReviews != nil {
-		if desired.DismissStaleReviews != *bp.DismissStaleReviews {
-			result.Changes = append(result.Changes, Change{Field: "dismiss_stale_reviews", Current: desired.DismissStaleReviews, Desired: *bp.DismissStaleReviews})
-		}
-		desired.DismissStaleReviews = *bp.DismissStaleReviews
-	}
-	if bp.RequireCodeOwnerReviews != nil {
-		if desired.RequireCodeOwnerReviews != *bp.RequireCodeOwnerReviews {
-			result.Changes = append(result.Changes, Change{Field: "require_code_owner_reviews", Current: desired.RequireCodeOwnerReviews, Desired: *bp.RequireCodeOwnerReviews})
-		}
-		desired.RequireCodeOwnerReviews = *bp.RequireCodeOwnerReviews
-	}
+	changed = applyDesiredSetting(&result, "required_reviews", bp.RequiredReviews, &desired.RequiredReviews) || changed
+	changed = applyDesiredSetting(&result, "dismiss_stale_reviews", bp.DismissStaleReviews, &desired.DismissStaleReviews) || changed
+	changed = applyDesiredSetting(&result, "require_code_owner_reviews", bp.RequireCodeOwnerReviews, &desired.RequireCodeOwnerReviews) || changed
 
 	// Status checks
-	if bp.RequireStatusChecks != nil {
-		if desired.StatusChecksEnabled != *bp.RequireStatusChecks {
-			result.Changes = append(result.Changes, Change{Field: "require_status_checks", Current: desired.StatusChecksEnabled, Desired: *bp.RequireStatusChecks})
-		}
-		desired.StatusChecksEnabled = *bp.RequireStatusChecks
-	}
-	if bp.RequireBranchesUpToDate != nil {
-		if desired.RequireBranchesUpToDate != *bp.RequireBranchesUpToDate {
-			result.Changes = append(result.Changes, Change{Field: "require_branches_up_to_date", Current: desired.RequireBranchesUpToDate, Desired: *bp.RequireBranchesUpToDate})
-		}
-		desired.RequireBranchesUpToDate = *bp.RequireBranchesUpToDate
-	}
+	changed = applyDesiredSetting(&result, "require_status_checks", bp.RequireStatusChecks, &desired.StatusChecksEnabled) || changed
+	changed = applyDesiredSetting(&result, "require_branches_up_to_date", bp.RequireBranchesUpToDate, &desired.RequireBranchesUpToDate) || changed
 	if len(bp.StatusCheckContexts) > 0 {
-		if !reflect.DeepEqual(desired.StatusCheckContexts, bp.StatusCheckContexts) {
-			result.Changes = append(result.Changes, Change{Field: "status_check_contexts", Current: desired.StatusCheckContexts, Desired: bp.StatusCheckContexts})
-		}
-		desired.StatusCheckContexts = bp.StatusCheckContexts
+		changed = applyDesiredStringSlice(&result, "status_check_contexts", bp.StatusCheckContexts, &desired.StatusCheckContexts) || changed
 		desired.StatusCheckChecks = nil
 	}
 
@@ -320,45 +260,15 @@ func (s *Syncer) syncBranchProtection(repo config.Repository, dryRun bool) Resul
 		}
 	}
 
-	if bp.IncludeAdmins != nil {
-		if desired.IncludeAdmins != *bp.IncludeAdmins {
-			result.Changes = append(result.Changes, Change{Field: "include_admins", Current: desired.IncludeAdmins, Desired: *bp.IncludeAdmins})
-		}
-		desired.IncludeAdmins = *bp.IncludeAdmins
-	}
-	if bp.RequireLinearHistory != nil {
-		if desired.RequireLinearHistory != *bp.RequireLinearHistory {
-			result.Changes = append(result.Changes, Change{Field: "require_linear_history", Current: desired.RequireLinearHistory, Desired: *bp.RequireLinearHistory})
-		}
-		desired.RequireLinearHistory = *bp.RequireLinearHistory
-	}
-	if bp.RequireSignedCommits != nil {
-		if desired.RequireSignedCommits != *bp.RequireSignedCommits {
-			result.Changes = append(result.Changes, Change{Field: "require_signed_commits", Current: desired.RequireSignedCommits, Desired: *bp.RequireSignedCommits})
-		}
-		desired.RequireSignedCommits = *bp.RequireSignedCommits
-	}
-	if bp.RequireConversationResolution != nil {
-		if desired.RequireConversationResolution != *bp.RequireConversationResolution {
-			result.Changes = append(result.Changes, Change{Field: "require_conversation_resolution", Current: desired.RequireConversationResolution, Desired: *bp.RequireConversationResolution})
-		}
-		desired.RequireConversationResolution = *bp.RequireConversationResolution
-	}
-	if bp.AllowForcePushes != nil {
-		if desired.AllowForcePushes != *bp.AllowForcePushes {
-			result.Changes = append(result.Changes, Change{Field: "allow_force_pushes", Current: desired.AllowForcePushes, Desired: *bp.AllowForcePushes})
-		}
-		desired.AllowForcePushes = *bp.AllowForcePushes
-	}
-	if bp.AllowDeletions != nil {
-		if desired.AllowDeletions != *bp.AllowDeletions {
-			result.Changes = append(result.Changes, Change{Field: "allow_deletions", Current: desired.AllowDeletions, Desired: *bp.AllowDeletions})
-		}
-		desired.AllowDeletions = *bp.AllowDeletions
-	}
+	changed = applyDesiredSetting(&result, "include_admins", bp.IncludeAdmins, &desired.IncludeAdmins) || changed
+	changed = applyDesiredSetting(&result, "require_linear_history", bp.RequireLinearHistory, &desired.RequireLinearHistory) || changed
+	changed = applyDesiredSetting(&result, "require_signed_commits", bp.RequireSignedCommits, &desired.RequireSignedCommits) || changed
+	changed = applyDesiredSetting(&result, "require_conversation_resolution", bp.RequireConversationResolution, &desired.RequireConversationResolution) || changed
+	changed = applyDesiredSetting(&result, "allow_force_pushes", bp.AllowForcePushes, &desired.AllowForcePushes) || changed
+	changed = applyDesiredSetting(&result, "allow_deletions", bp.AllowDeletions, &desired.AllowDeletions) || changed
 
 	// Apply changes if not dry-run
-	if !dryRun && len(result.Changes) > 0 {
+	if !dryRun && changed {
 		if err := s.client.UpdateBranchProtection(repo.Owner, repo.Name, &desired); err != nil {
 			result.Error = fmt.Errorf("failed to update branch protection: %w", err)
 			return result

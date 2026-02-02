@@ -2,28 +2,6 @@ package github
 
 import "testing"
 
-func TestBuildRepositoryEditRequest_Partial(t *testing.T) {
-	allowMerge := true
-	patch := &RepositorySettingsPatch{AllowMergeCommit: &allowMerge}
-
-	req := buildRepositoryEditRequest(patch)
-	if req.AllowMergeCommit == nil || *req.AllowMergeCommit != true {
-		t.Fatalf("AllowMergeCommit = %v; want true", req.AllowMergeCommit)
-	}
-	if req.AllowSquashMerge != nil {
-		t.Fatalf("AllowSquashMerge = %v; want nil", req.AllowSquashMerge)
-	}
-	if req.AllowRebaseMerge != nil {
-		t.Fatalf("AllowRebaseMerge = %v; want nil", req.AllowRebaseMerge)
-	}
-	if req.Private != nil {
-		t.Fatalf("Private = %v; want nil", req.Private)
-	}
-	if req.DeleteBranchOnMerge != nil {
-		t.Fatalf("DeleteBranchOnMerge = %v; want nil", req.DeleteBranchOnMerge)
-	}
-}
-
 func TestBuildProtectionRequest_StatusChecks(t *testing.T) {
 	p := &BranchProtectionInfo{
 		PullRequestReviewsEnabled: true,
