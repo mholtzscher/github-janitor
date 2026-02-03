@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/mholtzscher/templates.git",
-  "commit": "1eae3fc22a9f",
+  "commit": "af11f4df4592",
   "context": {
     "cookiecutter": {
       "project_name": "github-janitor",
@@ -17,8 +17,17 @@
       "go_version": "1.25"
     }
   },
-  "directory": "github-janitor",
+  "directory": "go-nix-cli",
   "skip": [
+    ".github/.release-please-manifest.json",
+    "CHANGELOG.md",
+    "README.md",
+    ".goreleaser.yaml",
+    "cmd",
+    "internal",
+    "test",
+    "main.go",
+    "go.mod",
     "go.sum",
     "gomod2nix.toml",
     "flake.lock"
