@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/mholtzscher/templates.git",
-  "commit": "af11f4df4592",
+  "commit": "290576a1fd9413b62b5869599c74453265623b16",
   "context": {
     "cookiecutter": {
       "project_name": "github-janitor",
@@ -14,7 +14,12 @@
       "license": "MIT",
       "use_cgo": "no",
       "use_homebrew": "yes",
-      "go_version": "1.25"
+      "go_version": "1.25",
+      "_template": "https://github.com/mholtzscher/templates.git",
+      "_commit": "290576a1fd9413b62b5869599c74453265623b16",
+      "_copy_without_render": [
+        "test/testscript/scripts/*.txtar"
+      ]
     }
   },
   "directory": "go-nix-cli",
@@ -31,5 +36,6 @@
     "go.sum",
     "gomod2nix.toml",
     "flake.lock"
-  ]
+  ],
+  "checkout": null
 }

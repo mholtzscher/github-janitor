@@ -13,11 +13,6 @@
           "type": "generic",
           "path": "cmd/root.go",
           "glob": false
-        },
-        {
-          "type": "generic",
-          "path": "flake.nix",
-          "glob": false
         }
       ]
     }

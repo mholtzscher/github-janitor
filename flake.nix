@@ -26,7 +26,10 @@
           overlays = [ gomod2nix.overlays.default ];
         };
 
-        version = "0.1.3"; # x-release-please-version
+        releasePleaseManifest = builtins.fromJSON (
+          builtins.readFile ./.github/.release-please-manifest.json
+        );
+        version = releasePleaseManifest.".";
 
         # Add platform-specific build inputs here (e.g., CGO deps)
         buildInputs = [ ];
