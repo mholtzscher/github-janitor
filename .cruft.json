@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/mholtzscher/templates.git",
-  "commit": "88a7f83d6ee8",
+  "commit": "1eae3fc22a9f",
   "context": {
     "cookiecutter": {
       "project_name": "github-janitor",
