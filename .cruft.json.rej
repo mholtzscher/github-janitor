@@ -1,0 +1,9 @@
+diff a/.cruft.json b/.cruft.json	(rejected hunks)
+@@ -14,6 +14,7 @@
+       "license": "MIT",
+       "use_cgo": "no",
+       "use_homebrew": "yes",
++      "use_sqlc": "no",
+       "go_version": "1.25"
+     }
+   },
