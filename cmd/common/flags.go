@@ -1,5 +1,4 @@
-// Package common provides shared utilities for CLI commands.
-package common
+package common //nolint:revive // Package name is descriptive enough
 
 const (
 	FlagNoColor = "no-color"

@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,13 +14,13 @@ import (
 )
 
 const (
-	EnvToken          = "GITHUB_TOKEN"
+	EnvToken          = "GITHUB_TOKEN" //nolint:gosec // Not a credential, just env var name
 	TokenSourceFlag   = "--token flag"
-	TokenSourceEnvVar = "GITHUB_TOKEN env var"
+	TokenSourceEnvVar = "GITHUB_TOKEN env var" //nolint:gosec // Not a credential, just source name
 	TokenSourceGhCLI  = "gh CLI"
 )
 
-// Client wraps the GitHub API client
+// Client wraps the GitHub API client.
 type Client struct {
 	client      *github.Client
 	ctx         context.Context
@@ -34,7 +35,7 @@ func derefBool(v *bool) bool {
 }
 
 // NewClient creates a new GitHub client with the given token
-// If token is empty, it attempts to auto-detect from gh CLI or GITHUB_TOKEN env var
+// If token is empty, it attempts to auto-detect from gh CLI or GITHUB_TOKEN env var.
 func NewClient(token string) (*Client, error) {
 	ctx := context.Background()
 	tokenSource := TokenSourceFlag
@@ -61,7 +62,7 @@ func NewClient(token string) (*Client, error) {
 	}, nil
 }
 
-// detectToken attempts to find a GitHub token from various sources
+// detectToken attempts to find a GitHub token from various sources.
 func detectToken() (string, string, error) {
 	// First, try GITHUB_TOKEN environment variable
 	if token := os.Getenv(EnvToken); token != "" {
@@ -73,12 +74,16 @@ func detectToken() (string, string, error) {
 		return token, TokenSourceGhCLI, nil
 	}
 
-	return "", "", fmt.Errorf("no GitHub token found. Set %s environment variable or authenticate with 'gh auth login'", EnvToken)
+	return "", "", fmt.Errorf(
+		"no GitHub token found. Set %s environment variable or authenticate with 'gh auth login'",
+		EnvToken,
+	)
 }
 
-// getGhCliToken attempts to get a token from the GitHub CLI
+// getGhCliToken attempts to get a token from the GitHub CLI.
 func getGhCliToken() (string, error) {
-	cmd := exec.Command("gh", "auth", "token")
+	ctx := context.Background()
+	cmd := exec.CommandContext(ctx, "gh", "auth", "token")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -86,7 +91,7 @@ func getGhCliToken() (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-// ValidateAuth checks if the client can authenticate with GitHub
+// ValidateAuth checks if the client can authenticate with GitHub.
 func (c *Client) ValidateAuth() error {
 	_, resp, err := c.client.Users.Get(c.ctx, "")
 	if err != nil {
@@ -98,19 +103,19 @@ func (c *Client) ValidateAuth() error {
 	return nil
 }
 
-// GetAuthenticatedUser returns the currently authenticated user
+// GetAuthenticatedUser returns the currently authenticated user.
 func (c *Client) GetAuthenticatedUser() (string, error) {
 	user, _, err := c.client.Users.Get(c.ctx, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to get authenticated user: %w", err)
 	}
 	if user == nil || user.Login == nil {
-		return "", fmt.Errorf("failed to get authenticated user: missing login")
+		return "", errors.New("failed to get authenticated user: missing login")
 	}
 	return *user.Login, nil
 }
 
-// RepositoryInfo holds information about a repository
+// RepositoryInfo holds information about a repository.
 type RepositoryInfo struct {
 	Owner            string
 	Name             string
@@ -149,8 +154,10 @@ type RepositoryInfo struct {
 // Repository settings updates use go-github's *github.Repository directly.
 // Nil pointer fields are not sent to the GitHub API.
 
-// GetRepository fetches information about a repository
-func (c *Client) GetRepository(owner, name string) (*RepositoryInfo, error) {
+// GetRepository fetches information about a repository.
+func (c *Client) GetRepository( //nolint:gocognit // Field mapping is straightforward
+	owner, name string,
+) (*RepositoryInfo, error) {
 	repo, resp, err := c.client.Repositories.Get(c.ctx, owner, name)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -256,7 +263,7 @@ func (c *Client) UpdateRepositorySettings(owner, name string, patch *github.Repo
 	return nil
 }
 
-// BranchProtectionInfo holds branch protection settings
+// BranchProtectionInfo holds branch protection settings.
 type BranchProtectionInfo struct {
 	Enabled bool
 	Pattern string
@@ -285,8 +292,10 @@ type BranchProtectionInfo struct {
 	AllowDeletions                bool
 }
 
-// GetBranchProtection fetches branch protection settings
-func (c *Client) GetBranchProtection(owner, name, pattern string) (*BranchProtectionInfo, error) {
+// GetBranchProtection fetches branch protection settings.
+func (c *Client) GetBranchProtection( //nolint:gocognit // Field mapping is straightforward
+	owner, name, pattern string,
+) (*BranchProtectionInfo, error) {
 	protection, resp, err := c.client.Repositories.GetBranchProtection(c.ctx, owner, name, pattern)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -363,7 +372,7 @@ func (c *Client) GetBranchProtection(owner, name, pattern string) (*BranchProtec
 	return info, nil
 }
 
-// UpdateBranchProtection updates branch protection settings
+// UpdateBranchProtection updates branch protection settings.
 func (c *Client) UpdateBranchProtection(owner, name string, protection *BranchProtectionInfo) error {
 	if !protection.Enabled {
 		// Remove protection if disabled
@@ -381,8 +390,13 @@ func (c *Client) UpdateBranchProtection(owner, name string, protection *BranchPr
 		return fmt.Errorf("failed to update branch protection: %w", err)
 	}
 
-	if err := c.updateRequiredSignatures(owner, name, protection.Pattern, protection.RequireSignedCommits); err != nil {
-		return fmt.Errorf("failed to update required signatures: %w", err)
+	if sigErr := c.updateRequiredSignatures(
+		owner,
+		name,
+		protection.Pattern,
+		protection.RequireSignedCommits,
+	); sigErr != nil {
+		return fmt.Errorf("failed to update required signatures: %w", sigErr)
 	}
 
 	return nil
@@ -465,13 +479,25 @@ func (c *Client) updateRequiredSignatures(owner, name, pattern string, required 
 	if required {
 		_, _, err := c.client.Repositories.RequireSignaturesOnProtectedBranch(c.ctx, owner, name, pattern)
 		if err != nil {
-			return fmt.Errorf("failed to require signatures on protected branch %s/%s:%s: %w", owner, name, pattern, err)
+			return fmt.Errorf(
+				"failed to require signatures on protected branch %s/%s:%s: %w",
+				owner,
+				name,
+				pattern,
+				err,
+			)
 		}
 		return nil
 	}
 	_, err := c.client.Repositories.OptionalSignaturesOnProtectedBranch(c.ctx, owner, name, pattern)
 	if err != nil {
-		return fmt.Errorf("failed to make signatures optional on protected branch %s/%s:%s: %w", owner, name, pattern, err)
+		return fmt.Errorf(
+			"failed to make signatures optional on protected branch %s/%s:%s: %w",
+			owner,
+			name,
+			pattern,
+			err,
+		)
 	}
 	return nil
 }
