@@ -9,6 +9,8 @@ repositories:
     name: ugh
   - owner: mholtzscher
     name: github-janitor
+  - owner: mholtzscher
+    name: today
 
 settings:
   # Merge methods
