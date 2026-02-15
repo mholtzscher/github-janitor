@@ -1,6 +1,7 @@
-package testscript
+package testscript //nolint:testpackage // Testscript tests are self-contained
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -25,8 +26,8 @@ func TestScript(t *testing.T) {
 			}
 
 			binDir := filepath.Join(env.WorkDir, "bin")
-			if err := os.MkdirAll(binDir, 0o755); err != nil {
-				return fmt.Errorf("create bin dir: %w", err)
+			if mkdirErr := os.MkdirAll(binDir, 0o755); mkdirErr != nil {
+				return fmt.Errorf("create bin dir: %w", mkdirErr)
 			}
 
 			exePath := filepath.Join(binDir, "github-janitor")
@@ -47,7 +48,7 @@ func TestScript(t *testing.T) {
 func moduleRoot() (string, error) {
 	_, file, _, ok := runtime.Caller(0)
 	if !ok {
-		return "", fmt.Errorf("runtime.Caller failed")
+		return "", errors.New("runtime.Caller failed")
 	}
 	// This file lives at test/testscript/testscript_test.go.
 	// The module root is two levels above test/.

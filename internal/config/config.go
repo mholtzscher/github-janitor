@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -30,25 +31,25 @@ const (
 	MergeMessageBlank   = "BLANK"
 )
 
-// Config represents the complete configuration file
+// Config represents the complete configuration file.
 type Config struct {
 	Repositories []Repository `yaml:"repositories"`
 	Settings     Settings     `yaml:"settings"`
 }
 
-// Repository represents a target repository
+// Repository represents a target repository.
 type Repository struct {
 	Owner string `yaml:"owner"`
 	Name  string `yaml:"name"`
 }
 
-// FullName returns the full repository name (owner/name)
+// FullName returns the full repository name (owner/name).
 func (r Repository) FullName() string {
 	return fmt.Sprintf("%s/%s", r.Owner, r.Name)
 }
 
 // Settings represents the settings to apply to all repositories
-// Use pointers to distinguish between "not set" (nil) and "set to false"
+// Use pointers to distinguish between "not set" (nil) and "set to false".
 type Settings struct {
 	// Merge methods
 	AllowMergeCommit    *bool `yaml:"allow_merge_commit,omitempty"`
@@ -90,12 +91,12 @@ type Settings struct {
 	BranchProtection *BranchProtection `yaml:"branch_protection,omitempty"`
 }
 
-// GitHubPages represents GitHub Pages configuration
+// GitHubPages represents GitHub Pages configuration.
 type GitHubPages struct {
 	Enabled *bool `yaml:"enabled,omitempty"`
 }
 
-// BranchProtection represents branch protection settings
+// BranchProtection represents branch protection settings.
 type BranchProtection struct {
 	Enabled bool   `yaml:"enabled"`
 	Pattern string `yaml:"pattern"`
@@ -119,7 +120,7 @@ type BranchProtection struct {
 	AllowDeletions                *bool `yaml:"allow_deletions,omitempty"`
 }
 
-// Load reads and parses the configuration file
+// Load reads and parses the configuration file.
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -127,21 +128,21 @@ func Load(path string) (*Config, error) {
 	}
 
 	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	if parseErr := yaml.Unmarshal(data, &cfg); parseErr != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", parseErr)
 	}
 
-	if err := cfg.Validate(); err != nil {
-		return nil, err
+	if validateErr := cfg.Validate(); validateErr != nil {
+		return nil, validateErr
 	}
 
 	return &cfg, nil
 }
 
-// Validate checks if the configuration is valid
-func (c *Config) Validate() error {
+// Validate checks if the configuration is valid.
+func (c *Config) Validate() error { //nolint:gocognit // Validation logic is inherently branching
 	if len(c.Repositories) == 0 {
-		return fmt.Errorf("no repositories configured")
+		return errors.New("no repositories configured")
 	}
 
 	for i, repo := range c.Repositories {
@@ -153,18 +154,19 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if c.Settings.Visibility != nil && *c.Settings.Visibility != VisibilityPublic && *c.Settings.Visibility != VisibilityPrivate {
-		return fmt.Errorf("invalid visibility: must be 'public' or 'private'")
+	if c.Settings.Visibility != nil && *c.Settings.Visibility != VisibilityPublic &&
+		*c.Settings.Visibility != VisibilityPrivate {
+		return errors.New("invalid visibility: must be 'public' or 'private'")
 	}
 
 	if c.Settings.BranchProtection != nil {
 		bp := c.Settings.BranchProtection
 		if bp.Enabled && bp.Pattern == "" {
-			return fmt.Errorf("branch_protection: pattern is required when enabled")
+			return errors.New("branch_protection: pattern is required when enabled")
 		}
 		if bp.RequiredReviews != nil {
 			if *bp.RequiredReviews < 0 || *bp.RequiredReviews > 6 {
-				return fmt.Errorf("branch_protection: required_reviews must be between 0 and 6")
+				return errors.New("branch_protection: required_reviews must be between 0 and 6")
 			}
 		}
 	}
@@ -204,12 +206,12 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// contains checks if a string slice contains a value
+// contains checks if a string slice contains a value.
 func contains(slice []string, item string) bool {
 	return slices.Contains(slice, item)
 }
 
-// ExampleConfig returns an example configuration as a string
+// ExampleConfig returns an example configuration as a string.
 func ExampleConfig() string {
 	return `repositories:
   - owner: mholtzscher

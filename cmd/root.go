@@ -5,6 +5,8 @@ import (
 	"context"
 
 	"github.com/fatih/color"
+	ufcli "github.com/urfave/cli/v3"
+
 	"github.com/mholtzscher/github-janitor/cmd/common"
 	initcmd "github.com/mholtzscher/github-janitor/cmd/init"
 	"github.com/mholtzscher/github-janitor/cmd/plan"
@@ -12,11 +14,10 @@ import (
 	"github.com/mholtzscher/github-janitor/cmd/validate"
 	"github.com/mholtzscher/github-janitor/internal/config"
 	"github.com/mholtzscher/github-janitor/internal/github"
-	ufcli "github.com/urfave/cli/v3"
 )
 
 // Version is set at build time.
-var Version = "0.1.3" // x-release-please-version
+var Version = "0.1.3" //nolint:gochecknoglobals // Version is set at build time
 
 // Run is the entry point for the CLI.
 func Run(ctx context.Context, args []string) error {
@@ -26,7 +27,7 @@ func Run(ctx context.Context, args []string) error {
 		Version: Version,
 		Before: func(ctx context.Context, cmd *ufcli.Command) (context.Context, error) {
 			if cmd.Bool(common.FlagNoColor) {
-				color.NoColor = true
+				color.NoColor = true //nolint:reassign // Setting color.NoColor is the intended way to disable colors
 			}
 			return ctx, nil
 		},

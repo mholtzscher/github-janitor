@@ -1,4 +1,4 @@
-package github
+package github //nolint:testpackage // Tests internal implementation details
 
 import "testing"
 
@@ -27,7 +27,8 @@ func TestBuildProtectionRequest_StatusChecks(t *testing.T) {
 	if req.RequiredStatusChecks.Strict != false {
 		t.Fatalf("Strict = %v; want false", req.RequiredStatusChecks.Strict)
 	}
-	if req.RequiredStatusChecks.Contexts == nil || len(*req.RequiredStatusChecks.Contexts) != 1 || (*req.RequiredStatusChecks.Contexts)[0] != "ci/test" {
+	if req.RequiredStatusChecks.Contexts == nil || len(*req.RequiredStatusChecks.Contexts) != 1 ||
+		(*req.RequiredStatusChecks.Contexts)[0] != "ci/test" {
 		t.Fatalf("Contexts = %v; want [ci/test]", req.RequiredStatusChecks.Contexts)
 	}
 	if req.RequiredStatusChecks.Checks == nil || len(*req.RequiredStatusChecks.Checks) != 0 {
@@ -38,7 +39,10 @@ func TestBuildProtectionRequest_StatusChecks(t *testing.T) {
 		t.Fatal("RequiredPullRequestReviews is nil; want non-nil")
 	}
 	if req.RequiredPullRequestReviews.RequiredApprovingReviewCount != 2 {
-		t.Fatalf("RequiredApprovingReviewCount = %d; want 2", req.RequiredPullRequestReviews.RequiredApprovingReviewCount)
+		t.Fatalf(
+			"RequiredApprovingReviewCount = %d; want 2",
+			req.RequiredPullRequestReviews.RequiredApprovingReviewCount,
+		)
 	}
 	if req.RequiredPullRequestReviews.DismissStaleReviews != true {
 		t.Fatalf("DismissStaleReviews = %v; want true", req.RequiredPullRequestReviews.DismissStaleReviews)

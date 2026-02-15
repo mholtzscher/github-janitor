@@ -1,4 +1,4 @@
-package sync
+package sync //nolint:testpackage // Tests internal implementation details
 
 import (
 	"errors"
@@ -76,7 +76,7 @@ func changeByField(t *testing.T, changes []Change) map[string]Change {
 	return got
 }
 
-func TestApplySetting(t *testing.T) {
+func TestApplySetting(t *testing.T) { //nolint:gocognit // Table-driven tests with subtests
 	t.Run("configured_nil_noop", func(t *testing.T) {
 		result := &Result{}
 		var patchVal *bool
@@ -138,7 +138,7 @@ func TestApplySetting(t *testing.T) {
 	})
 }
 
-func TestApplyDesiredSetting(t *testing.T) {
+func TestApplyDesiredSetting(t *testing.T) { //nolint:gocognit // Table-driven tests with subtests
 	t.Run("configured_nil_noop", func(t *testing.T) {
 		result := &Result{}
 		desired := 1
@@ -266,7 +266,15 @@ func TestSyncRepository_SkipsWhenRepoDoesNotExist(t *testing.T) {
 func TestSyncRepository_DryRunDoesNotUpdate(t *testing.T) {
 	repo := config.Repository{Owner: "o", Name: "r"}
 
-	fake := &fakeGitHubClient{getRepoResp: &github.RepositoryInfo{Owner: "o", Name: "r", Exists: true, AllowMergeCommit: false, Private: false}}
+	fake := &fakeGitHubClient{
+		getRepoResp: &github.RepositoryInfo{
+			Owner:            "o",
+			Name:             "r",
+			Exists:           true,
+			AllowMergeCommit: false,
+			Private:          false,
+		},
+	}
 	cfg := &config.Config{
 		Repositories: []config.Repository{repo},
 		Settings: config.Settings{
@@ -299,7 +307,16 @@ func TestSyncRepository_DryRunDoesNotUpdate(t *testing.T) {
 func TestSyncRepository_AppliesUpdateWhenChanged(t *testing.T) {
 	repo := config.Repository{Owner: "o", Name: "r"}
 
-	fake := &fakeGitHubClient{getRepoResp: &github.RepositoryInfo{Owner: "o", Name: "r", Exists: true, AllowMergeCommit: false, AllowSquashMerge: true, Private: false}}
+	fake := &fakeGitHubClient{
+		getRepoResp: &github.RepositoryInfo{
+			Owner:            "o",
+			Name:             "r",
+			Exists:           true,
+			AllowMergeCommit: false,
+			AllowSquashMerge: true,
+			Private:          false,
+		},
+	}
 	cfg := &config.Config{
 		Repositories: []config.Repository{repo},
 		Settings: config.Settings{
@@ -451,7 +468,8 @@ func TestSyncBranchProtection_ConfiguredContextsOverrideAndClearChecks(t *testin
 	}
 
 	got := changeByField(t, result.Changes)
-	if c, ok := got["status_check_contexts"]; !ok || !reflect.DeepEqual(c.Current, []string{"old"}) || !reflect.DeepEqual(c.Desired, []string{"ci/test"}) {
+	if c, ok := got["status_check_contexts"]; !ok || !reflect.DeepEqual(c.Current, []string{"old"}) ||
+		!reflect.DeepEqual(c.Desired, []string{"ci/test"}) {
 		t.Fatalf("status_check_contexts change = %v; want [old] -> [ci/test]", c)
 	}
 }
@@ -459,7 +477,14 @@ func TestSyncBranchProtection_ConfiguredContextsOverrideAndClearChecks(t *testin
 func TestSyncBranchProtection_ConfiguredReviewsEnablePRReviews(t *testing.T) {
 	repo := config.Repository{Owner: "o", Name: "r"}
 
-	fake := &fakeGitHubClient{getBranchResp: &github.BranchProtectionInfo{Enabled: true, Pattern: "main", PullRequestReviewsEnabled: false, RequiredReviews: 0}}
+	fake := &fakeGitHubClient{
+		getBranchResp: &github.BranchProtectionInfo{
+			Enabled:                   true,
+			Pattern:                   "main",
+			PullRequestReviewsEnabled: false,
+			RequiredReviews:           0,
+		},
+	}
 	cfg := &config.Config{
 		Repositories: []config.Repository{repo},
 		Settings: config.Settings{
@@ -496,7 +521,14 @@ func TestSyncBranchProtection_ConfiguredReviewsEnablePRReviews(t *testing.T) {
 func TestSyncBranchProtection_ConfiguredZeroReviewsEnablesPRReviews(t *testing.T) {
 	repo := config.Repository{Owner: "o", Name: "r"}
 
-	fake := &fakeGitHubClient{getBranchResp: &github.BranchProtectionInfo{Enabled: true, Pattern: "main", PullRequestReviewsEnabled: false, RequiredReviews: 0}}
+	fake := &fakeGitHubClient{
+		getBranchResp: &github.BranchProtectionInfo{
+			Enabled:                   true,
+			Pattern:                   "main",
+			PullRequestReviewsEnabled: false,
+			RequiredReviews:           0,
+		},
+	}
 	cfg := &config.Config{
 		Repositories: []config.Repository{repo},
 		Settings: config.Settings{
