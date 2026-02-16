@@ -1,4 +1,4 @@
-package sync //nolint:testpackage // Tests internal implementation details
+package reposync //nolint:testpackage // Tests internal implementation details
 
 import (
 	"errors"

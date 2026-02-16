@@ -10,7 +10,7 @@ import (
 	"github.com/mholtzscher/github-janitor/cmd/common"
 	initcmd "github.com/mholtzscher/github-janitor/cmd/init"
 	"github.com/mholtzscher/github-janitor/cmd/plan"
-	"github.com/mholtzscher/github-janitor/cmd/sync"
+	reposync "github.com/mholtzscher/github-janitor/cmd/sync"
 	"github.com/mholtzscher/github-janitor/cmd/validate"
 	"github.com/mholtzscher/github-janitor/internal/config"
 	"github.com/mholtzscher/github-janitor/internal/github"
@@ -51,7 +51,7 @@ func Run(ctx context.Context, args []string) error {
 			},
 		},
 		Commands: []*ufcli.Command{
-			sync.NewCommand(),
+			reposync.NewCommand(),
 			plan.NewCommand(),
 			validate.NewCommand(),
 			initcmd.NewCommand(),
