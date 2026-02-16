@@ -11,6 +11,8 @@ repositories:
     name: github-janitor
   - owner: mholtzscher
     name: today
+  - owner: mholtzscher
+    name: kcwater-ha
 
 settings:
   # Merge methods
