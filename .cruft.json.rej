@@ -1,0 +1,46 @@
+diff a/.cruft.json b/.cruft.json	(rejected hunks)
+@@ -1,21 +1,28 @@
+ {
+   "template": "https://github.com/mholtzscher/templates.git",
+-  "commit": "f5c7beea9d864d55d6d09c02b91e1510dbb15d17",
++  "commit": "8357e05c7a2a8e94fe1dcda9729a28efef9a675b",
++  "checkout": null,
+   "context": {
+     "cookiecutter": {
+-      "project_name": "github-janitor",
+-      "project_slug": "github-janitor",
++      "project_name": "My CLI Tool",
++      "project_slug": "my-cli-tool",
+       "project_description": "A Go CLI tool built with Nix",
+-      "github_owner": "mholtzscher",
+-      "github_repo": "github-janitor",
+-      "module_path": "github.com/mholtzscher/github-janitor",
+-      "author_name": "Michael Holtzscher",
+-      "author_email": "michael@holtzscher.com",
++      "github_owner": "username",
++      "github_repo": "my-cli-tool",
++      "module_path": "github.com/username/my-cli-tool",
++      "author_name": "Your Name",
++      "author_email": "your.email@example.com",
+       "license": "MIT",
+       "use_cgo": "no",
+       "use_homebrew": "yes",
+       "use_sqlc": "no",
+-      "go_version": "1.25"
++      "go_version": "1.25",
++      "_template": "https://github.com/mholtzscher/templates.git",
++      "_commit": "8357e05c7a2a8e94fe1dcda9729a28efef9a675b",
++      "_copy_without_render": [
++        "test/testscript/scripts/*.txtar",
++        "db/*.sql"
++      ]
+     }
+   },
+   "directory": "go-nix-cli",
+@@ -35,4 +42,4 @@
+     "gomod2nix.toml",
+     "flake.lock"
+   ]
+-}
++}
+\ No newline at end of file
