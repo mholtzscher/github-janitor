@@ -11,7 +11,7 @@ import (
 	"github.com/mholtzscher/github-janitor/cmd/common"
 	"github.com/mholtzscher/github-janitor/internal/config"
 	"github.com/mholtzscher/github-janitor/internal/github"
-	"github.com/mholtzscher/github-janitor/internal/sync"
+	reposync "github.com/mholtzscher/github-janitor/internal/sync"
 )
 
 // NewCommand creates the plan command (dry-run mode).
@@ -55,7 +55,7 @@ func runPlan(_ context.Context, cmd *ufcli.Command) error {
 	)
 
 	// Create syncer
-	syncer := sync.NewSyncer(client, cfg)
+	syncer := reposync.NewSyncer(client, cfg)
 
 	mode := common.Yellow("DRY-RUN (preview only)")
 	modeColor := common.Yellow
@@ -75,7 +75,7 @@ func runPlan(_ context.Context, cmd *ufcli.Command) error {
 	return nil
 }
 
-func printResults(results []sync.Result) {
+func printResults(results []reposync.Result) {
 	fmt.Println("\n" + common.BoldWhite(common.Repeat("=", common.SeparatorWidth))) //nolint:forbidigo // CLI output
 	fmt.Println(common.BoldWhite("SYNC RESULTS"))                                   //nolint:forbidigo // CLI output
 	fmt.Println(common.BoldWhite(common.Repeat("=", common.SeparatorWidth)))        //nolint:forbidigo // CLI output
