@@ -19,6 +19,8 @@ func intPtr(v int) *int          { return &v }
 type fakeGitHubClient struct {
 	getRepoCalls      int
 	updateRepoCalls   int
+	getSecurityCalls  int
+	setSecurityOps    []string
 	getBranchCalls    int
 	updateBranchCalls int
 	lastRepoOwner     string
@@ -29,6 +31,10 @@ type fakeGitHubClient struct {
 	getRepoResp       *github.RepositoryInfo
 	getRepoErr        error
 	updateRepoErr     error
+	getSecurityResp   *github.SecuritySettingsInfo
+	getSecurityErr    error
+	setAlertsErr      error
+	setUpdatesErr     error
 	getBranchResp     *github.BranchProtectionInfo
 	getBranchErr      error
 	updateBranchErr   error
@@ -37,6 +43,31 @@ type fakeGitHubClient struct {
 	setSecretErr      error
 	lastSecretName    string
 	lastSecretValue   string
+}
+
+func (f *fakeGitHubClient) GetSecuritySettings(_, _ string) (*github.SecuritySettingsInfo, error) {
+	f.getSecurityCalls++
+	return f.getSecurityResp, f.getSecurityErr
+}
+
+func (f *fakeGitHubClient) SetDependabotAlerts(_, _ string, enabled bool) error {
+	f.setSecurityOps = append(f.setSecurityOps, "alerts")
+	if enabled {
+		f.setSecurityOps[len(f.setSecurityOps)-1] = "alerts:on"
+	} else {
+		f.setSecurityOps[len(f.setSecurityOps)-1] = "alerts:off"
+	}
+	return f.setAlertsErr
+}
+
+func (f *fakeGitHubClient) SetDependabotSecurityUpdates(_, _ string, enabled bool) error {
+	f.setSecurityOps = append(f.setSecurityOps, "updates")
+	if enabled {
+		f.setSecurityOps[len(f.setSecurityOps)-1] = "updates:on"
+	} else {
+		f.setSecurityOps[len(f.setSecurityOps)-1] = "updates:off"
+	}
+	return f.setUpdatesErr
 }
 
 func (f *fakeGitHubClient) GetActionsSecretPublicKey(_, _ string) (*github.ActionsSecretPublicKey, error) {
@@ -575,5 +606,105 @@ func TestSyncBranchProtection_ConfiguredZeroReviewsEnablesPRReviews(t *testing.T
 	got := changeByField(t, result.Changes)
 	if c, ok := got["pull_request_reviews_enabled"]; !ok || c.Current != false || c.Desired != true {
 		t.Fatalf("pull_request_reviews_enabled change = %v; want false -> true", c)
+	}
+}
+
+func TestSyncSecuritySettings_DryRunShowsChangesWithoutMutations(t *testing.T) {
+	repo := config.Repository{Owner: "o", Name: "r"}
+
+	fake := &fakeGitHubClient{
+		getSecurityResp: &github.SecuritySettingsInfo{
+			DependabotAlerts:          false,
+			DependabotSecurityUpdates: false,
+		},
+	}
+
+	cfg := &config.Config{
+		Repositories: []config.Repository{repo},
+		Settings: config.Settings{
+			Security: &config.SecuritySettings{
+				DependabotAlerts:          boolPtr(true),
+				DependabotSecurityUpdates: boolPtr(true),
+			},
+		},
+	}
+
+	s := &Syncer{client: fake, config: cfg}
+	result := s.syncSecuritySettings(repo, true)
+	if result.Error != nil {
+		t.Fatalf("Error = %v; want nil", result.Error)
+	}
+	if len(fake.setSecurityOps) != 0 {
+		t.Fatalf("setSecurityOps = %v; want no mutations", fake.setSecurityOps)
+	}
+
+	got := changeByField(t, result.Changes)
+	if c, ok := got["security.dependabot_alerts"]; !ok || c.Current != false || c.Desired != true {
+		t.Fatalf("dependabot_alerts change = %v; want false -> true", c)
+	}
+	if c, ok := got["security.dependabot_security_updates"]; !ok || c.Current != false || c.Desired != true {
+		t.Fatalf("dependabot_security_updates change = %v; want false -> true", c)
+	}
+}
+
+func TestSyncSecuritySettings_ApplyEnableOrder(t *testing.T) {
+	repo := config.Repository{Owner: "o", Name: "r"}
+
+	fake := &fakeGitHubClient{
+		getSecurityResp: &github.SecuritySettingsInfo{
+			DependabotAlerts:          false,
+			DependabotSecurityUpdates: false,
+		},
+	}
+
+	cfg := &config.Config{
+		Repositories: []config.Repository{repo},
+		Settings: config.Settings{
+			Security: &config.SecuritySettings{
+				DependabotAlerts:          boolPtr(true),
+				DependabotSecurityUpdates: boolPtr(true),
+			},
+		},
+	}
+
+	s := &Syncer{client: fake, config: cfg}
+	result := s.syncSecuritySettings(repo, false)
+	if result.Error != nil {
+		t.Fatalf("Error = %v; want nil", result.Error)
+	}
+
+	if !reflect.DeepEqual(fake.setSecurityOps, []string{"alerts:on", "updates:on"}) {
+		t.Fatalf("setSecurityOps = %v; want [alerts:on updates:on]", fake.setSecurityOps)
+	}
+}
+
+func TestSyncSecuritySettings_ApplyDisableOrder(t *testing.T) {
+	repo := config.Repository{Owner: "o", Name: "r"}
+
+	fake := &fakeGitHubClient{
+		getSecurityResp: &github.SecuritySettingsInfo{
+			DependabotAlerts:          true,
+			DependabotSecurityUpdates: true,
+		},
+	}
+
+	cfg := &config.Config{
+		Repositories: []config.Repository{repo},
+		Settings: config.Settings{
+			Security: &config.SecuritySettings{
+				DependabotAlerts:          boolPtr(false),
+				DependabotSecurityUpdates: boolPtr(false),
+			},
+		},
+	}
+
+	s := &Syncer{client: fake, config: cfg}
+	result := s.syncSecuritySettings(repo, false)
+	if result.Error != nil {
+		t.Fatalf("Error = %v; want nil", result.Error)
+	}
+
+	if !reflect.DeepEqual(fake.setSecurityOps, []string{"updates:off", "alerts:off"}) {
+		t.Fatalf("setSecurityOps = %v; want [updates:off alerts:off]", fake.setSecurityOps)
 	}
 }

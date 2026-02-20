@@ -82,5 +82,8 @@ settings:
   actions_secrets:
     - name: PAT
       command: ["op" ,"item" ,"get", "dkrch6pc5n7jish55r5ifdto74"]
+
+  security:
+    dependabot_alerts: false
   
 

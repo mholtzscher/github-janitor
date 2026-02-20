@@ -11,6 +11,19 @@ import (
 	gogithub "github.com/google/go-github/v82/github"
 )
 
+func testClientForServer(t *testing.T, server *httptest.Server) *Client {
+	t.Helper()
+
+	ghClient := gogithub.NewClient(server.Client())
+	baseURL, err := ghClient.BaseURL.Parse(server.URL + "/")
+	if err != nil {
+		t.Fatalf("parse base URL: %v", err)
+	}
+	ghClient.BaseURL = baseURL
+
+	return &Client{client: ghClient, ctx: context.Background()}
+}
+
 func TestBuildProtectionRequest_StatusChecks(t *testing.T) {
 	p := &BranchProtectionInfo{
 		PullRequestReviewsEnabled: true,
@@ -109,17 +122,99 @@ func TestSetActionsSecret_SendsExpectedJSONPayload(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ghClient := gogithub.NewClient(server.Client())
-	baseURL, err := ghClient.BaseURL.Parse(server.URL + "/")
-	if err != nil {
-		t.Fatalf("parse base URL: %v", err)
-	}
-	ghClient.BaseURL = baseURL
+	client := testClientForServer(t, server)
 
-	client := &Client{client: ghClient, ctx: context.Background()}
-
-	err = client.SetActionsSecret(owner, repo, secretName, encryptedValue, keyID)
+	err := client.SetActionsSecret(owner, repo, secretName, encryptedValue, keyID)
 	if err != nil {
 		t.Fatalf("SetActionsSecret returned error: %v", err)
+	}
+}
+
+func TestGetSecuritySettings_ReadsEndpoints(t *testing.T) {
+	t.Parallel()
+
+	const (
+		owner = "mholtzscher"
+		repo  = "aerospace-utils"
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Helper()
+
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/repos/"+owner+"/"+repo+"/vulnerability-alerts":
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodGet && r.URL.Path == "/repos/"+owner+"/"+repo+"/automated-security-fixes":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"enabled":true,"paused":false}`))
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client := testClientForServer(t, server)
+
+	settings, err := client.GetSecuritySettings(owner, repo)
+	if err != nil {
+		t.Fatalf("GetSecuritySettings returned error: %v", err)
+	}
+
+	if !settings.DependabotAlerts {
+		t.Fatal("DependabotAlerts = false; want true")
+	}
+	if !settings.DependabotSecurityUpdates {
+		t.Fatal("DependabotSecurityUpdates = false; want true")
+	}
+	if settings.DependabotSecurityUpdatesPaused {
+		t.Fatal("DependabotSecurityUpdatesPaused = true; want false")
+	}
+}
+
+func TestSetDependabotAlerts_UsesVulnerabilityAlertEndpoint(t *testing.T) {
+	t.Parallel()
+	testToggleEndpoint(t, "vulnerability-alerts", func(client *Client, owner, repo string, enabled bool) error {
+		return client.SetDependabotAlerts(owner, repo, enabled)
+	})
+}
+
+func TestSetDependabotSecurityUpdates_UsesAutomatedFixesEndpoint(t *testing.T) {
+	t.Parallel()
+	testToggleEndpoint(t, "automated-security-fixes", func(client *Client, owner, repo string, enabled bool) error {
+		return client.SetDependabotSecurityUpdates(owner, repo, enabled)
+	})
+}
+
+func testToggleEndpoint(t *testing.T, endpoint string, setter func(*Client, string, string, bool) error) {
+	t.Helper()
+
+	const (
+		owner = "mholtzscher"
+		repo  = "aerospace-utils"
+	)
+
+	var got []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Helper()
+		got = append(got, r.Method+" "+r.URL.Path)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := testClientForServer(t, server)
+
+	if err := setter(client, owner, repo, true); err != nil {
+		t.Fatalf("setter(true) returned error: %v", err)
+	}
+	if err := setter(client, owner, repo, false); err != nil {
+		t.Fatalf("setter(false) returned error: %v", err)
+	}
+
+	want := []string{
+		http.MethodPut + " /repos/" + owner + "/" + repo + "/" + endpoint,
+		http.MethodDelete + " /repos/" + owner + "/" + repo + "/" + endpoint,
+	}
+	if !strings.EqualFold(strings.Join(got, "|"), strings.Join(want, "|")) {
+		t.Fatalf("requests = %v; want %v", got, want)
 	}
 }
