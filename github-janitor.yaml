@@ -78,3 +78,9 @@ settings:
     # require_conversation_resolution: true
     allow_force_pushes: false
     allow_deletions: false
+
+  actions_secrets:
+    - name: PAT
+      command: ["op" ,"item" ,"get", "dkrch6pc5n7jish55r5ifdto74"]
+  
+
