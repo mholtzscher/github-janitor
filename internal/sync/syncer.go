@@ -21,6 +21,9 @@ type Syncer struct {
 type githubAPI interface {
 	GetRepository(owner, name string) (*github.RepositoryInfo, error)
 	UpdateRepositorySettings(owner, name string, patch *gogithub.Repository) error
+	GetSecuritySettings(owner, name string) (*github.SecuritySettingsInfo, error)
+	SetDependabotAlerts(owner, name string, enabled bool) error
+	SetDependabotSecurityUpdates(owner, name string, enabled bool) error
 	GetBranchProtection(owner, name, pattern string) (*github.BranchProtectionInfo, error)
 	UpdateBranchProtection(owner, name string, protection *github.BranchProtectionInfo) error
 	GetActionsSecretPublicKey(owner, name string) (*github.ActionsSecretPublicKey, error)
@@ -335,6 +338,14 @@ func (s *Syncer) syncRepository( //nolint:cyclop,funlen,gocognit,gocyclo // Sync
 		}
 	}
 
+	if s.config.Settings.Security != nil {
+		securityResult := s.syncSecuritySettings(repo, dryRun)
+		result.Changes = append(result.Changes, securityResult.Changes...)
+		if securityResult.Error != nil {
+			result.Error = securityResult.Error
+		}
+	}
+
 	// Handle GitHub Pages separately (requires different API)
 	if s.config.Settings.GitHubPages != nil && s.config.Settings.GitHubPages.Enabled != nil {
 		desiredPagesEnabled := *s.config.Settings.GitHubPages.Enabled
@@ -369,6 +380,91 @@ func (s *Syncer) syncRepository( //nolint:cyclop,funlen,gocognit,gocyclo // Sync
 		result.Changes = append(result.Changes, secretsResult.Changes...)
 		if secretsResult.Error != nil {
 			result.Error = secretsResult.Error
+		}
+	}
+
+	return result
+}
+
+//nolint:gocognit // Explicit ordering logic is intentional.
+func (s *Syncer) syncSecuritySettings(repo config.Repository, dryRun bool) Result {
+	result := Result{
+		Repository: fmt.Sprintf("%s (security)", repo.FullName()),
+		Changes:    make([]Change, 0),
+	}
+
+	securityConfig := s.config.Settings.Security
+	if securityConfig == nil {
+		return result
+	}
+
+	current, err := s.client.GetSecuritySettings(repo.Owner, repo.Name)
+	if err != nil {
+		result.Error = err
+		return result
+	}
+	if current == nil {
+		result.Error = fmt.Errorf("failed to get security settings for %s: empty response", repo.FullName())
+		return result
+	}
+
+	alertsChanged := false
+	alertsDesired := current.DependabotAlerts
+	if securityConfig.DependabotAlerts != nil {
+		alertsDesired = *securityConfig.DependabotAlerts
+		if current.DependabotAlerts != alertsDesired {
+			alertsChanged = true
+			result.Changes = append(result.Changes, Change{
+				Field:   "security.dependabot_alerts",
+				Current: current.DependabotAlerts,
+				Desired: alertsDesired,
+			})
+		}
+	}
+
+	updatesChanged := false
+	updatesDesired := current.DependabotSecurityUpdates
+	if securityConfig.DependabotSecurityUpdates != nil {
+		updatesDesired = *securityConfig.DependabotSecurityUpdates
+		if current.DependabotSecurityUpdates != updatesDesired {
+			updatesChanged = true
+			result.Changes = append(result.Changes, Change{
+				Field:   "security.dependabot_security_updates",
+				Current: current.DependabotSecurityUpdates,
+				Desired: updatesDesired,
+			})
+		}
+	}
+
+	if dryRun {
+		return result
+	}
+
+	if updatesChanged && !updatesDesired {
+		if setErr := s.client.SetDependabotSecurityUpdates(repo.Owner, repo.Name, false); setErr != nil {
+			result.Error = setErr
+			return result
+		}
+	}
+
+	if alertsChanged && !alertsDesired {
+		if setErr := s.client.SetDependabotAlerts(repo.Owner, repo.Name, false); setErr != nil {
+			result.Error = setErr
+			return result
+		}
+	}
+
+	if alertsChanged && alertsDesired {
+		if setErr := s.client.SetDependabotAlerts(repo.Owner, repo.Name, true); setErr != nil {
+			result.Error = setErr
+			return result
+		}
+	}
+
+	if updatesChanged && updatesDesired {
+		if setErr := s.client.SetDependabotSecurityUpdates(repo.Owner, repo.Name, true); setErr != nil {
+			result.Error = setErr
+			return result
 		}
 	}
 

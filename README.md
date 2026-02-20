@@ -91,6 +91,11 @@ settings:
   web_commit_signoff_required: false
   allow_forking: true
 
+  # Security tooling
+  security:
+    dependabot_alerts: true
+    dependabot_security_updates: true
+
   github_pages:
     enabled: false
 

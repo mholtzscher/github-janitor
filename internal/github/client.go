@@ -295,6 +295,13 @@ type BranchProtectionInfo struct {
 	AllowDeletions                bool
 }
 
+// SecuritySettingsInfo holds repository security tooling settings.
+type SecuritySettingsInfo struct {
+	DependabotAlerts                bool
+	DependabotSecurityUpdates       bool
+	DependabotSecurityUpdatesPaused bool
+}
+
 // GetBranchProtection fetches branch protection settings.
 func (c *Client) GetBranchProtection( //nolint:gocognit // Field mapping is straightforward
 	owner, name, pattern string,
@@ -502,6 +509,61 @@ func (c *Client) updateRequiredSignatures(owner, name, pattern string, required 
 			err,
 		)
 	}
+	return nil
+}
+
+// GetSecuritySettings fetches repository security tooling settings.
+func (c *Client) GetSecuritySettings(owner, name string) (*SecuritySettingsInfo, error) {
+	alertsEnabled, _, err := c.client.Repositories.GetVulnerabilityAlerts(c.ctx, owner, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dependabot alerts for %s/%s: %w", owner, name, err)
+	}
+
+	fixes, _, err := c.client.Repositories.GetAutomatedSecurityFixes(c.ctx, owner, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dependabot security updates for %s/%s: %w", owner, name, err)
+	}
+
+	info := &SecuritySettingsInfo{DependabotAlerts: alertsEnabled}
+	if fixes != nil {
+		info.DependabotSecurityUpdates = fixes.GetEnabled()
+		info.DependabotSecurityUpdatesPaused = fixes.GetPaused()
+	}
+
+	return info, nil
+}
+
+// SetDependabotAlerts enables or disables dependabot alerts.
+func (c *Client) SetDependabotAlerts(owner, name string, enabled bool) error {
+	var err error
+
+	if enabled {
+		_, err = c.client.Repositories.EnableVulnerabilityAlerts(c.ctx, owner, name)
+	} else {
+		_, err = c.client.Repositories.DisableVulnerabilityAlerts(c.ctx, owner, name)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to set dependabot alerts=%t for %s/%s: %w", enabled, owner, name, err)
+	}
+
+	return nil
+}
+
+// SetDependabotSecurityUpdates enables or disables dependabot security updates.
+func (c *Client) SetDependabotSecurityUpdates(owner, name string, enabled bool) error {
+	var err error
+
+	if enabled {
+		_, err = c.client.Repositories.EnableAutomatedSecurityFixes(c.ctx, owner, name)
+	} else {
+		_, err = c.client.Repositories.DisableAutomatedSecurityFixes(c.ctx, owner, name)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to set dependabot security updates=%t for %s/%s: %w", enabled, owner, name, err)
+	}
+
 	return nil
 }
 

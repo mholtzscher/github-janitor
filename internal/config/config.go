@@ -93,6 +93,15 @@ type Settings struct {
 
 	// ActionsSecrets configures GitHub Actions secrets for all repositories.
 	ActionsSecrets []ActionsSecret `yaml:"actions_secrets,omitempty"`
+
+	// Security configures GitHub security tooling toggles.
+	Security *SecuritySettings `yaml:"security,omitempty"`
+}
+
+// SecuritySettings represents GitHub security tooling settings.
+type SecuritySettings struct {
+	DependabotAlerts          *bool `yaml:"dependabot_alerts,omitempty"`
+	DependabotSecurityUpdates *bool `yaml:"dependabot_security_updates,omitempty"`
 }
 
 // GitHubPages represents GitHub Pages configuration.
@@ -290,6 +299,14 @@ func (c *Config) Validate() error { //nolint:gocognit // Validation logic is inh
 		seenNames[secret.Name] = true
 	}
 
+	if c.Settings.Security != nil &&
+		c.Settings.Security.DependabotSecurityUpdates != nil &&
+		*c.Settings.Security.DependabotSecurityUpdates {
+		if c.Settings.Security.DependabotAlerts == nil || !*c.Settings.Security.DependabotAlerts {
+			return errors.New("security: dependabot_alerts must be true when dependabot_security_updates is true")
+		}
+	}
+
 	return nil
 }
 
@@ -377,5 +394,10 @@ settings:
     # From command (e.g., 1Password CLI)
     # - name: AWS_ACCESS_KEY_ID
     #   command: ["op", "read", "op://vault/item/access_key_id"]
+
+  # Security tooling (applied to all repos)
+  # security:
+  #   dependabot_alerts: true
+  #   dependabot_security_updates: true
 `
 }

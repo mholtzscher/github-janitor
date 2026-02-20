@@ -27,3 +27,40 @@ func TestValidate_BranchProtectionPatternRequired(t *testing.T) {
 		}
 	})
 }
+
+func TestValidate_SecurityDependabotUpdatesRequireAlerts(t *testing.T) {
+	t.Run("security_updates_true_requires_alerts_true", func(t *testing.T) {
+		cfg := &Config{
+			Repositories: []Repository{{Owner: "o", Name: "r"}},
+			Settings: Settings{
+				Security: &SecuritySettings{
+					DependabotSecurityUpdates: boolPtr(true),
+				},
+			},
+		}
+
+		if err := cfg.Validate(); err == nil {
+			t.Fatal("Validate() = nil; want error")
+		}
+	})
+
+	t.Run("security_updates_true_allows_alerts_true", func(t *testing.T) {
+		cfg := &Config{
+			Repositories: []Repository{{Owner: "o", Name: "r"}},
+			Settings: Settings{
+				Security: &SecuritySettings{
+					DependabotAlerts:          boolPtr(true),
+					DependabotSecurityUpdates: boolPtr(true),
+				},
+			},
+		}
+
+		if err := cfg.Validate(); err != nil {
+			t.Fatalf("Validate() error = %v; want nil", err)
+		}
+	})
+}
+
+func boolPtr(v bool) *bool {
+	return &v
+}
