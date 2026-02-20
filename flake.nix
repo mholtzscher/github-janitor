@@ -40,6 +40,10 @@
         ];
       in
       {
+        checks = {
+          package = self.packages.${system}.default;
+        };
+
         packages.default = pkgs.buildGoApplication {
           pname = "github-janitor";
           inherit version;
