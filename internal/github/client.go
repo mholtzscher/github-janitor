@@ -1,11 +1,9 @@
 package github
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -569,17 +567,10 @@ func (c *Client) SetActionsSecret(owner, name, secretName, encryptedValue, keyID
 		"key_id":          keyID,
 	}
 
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	req, err := c.client.NewRequest(http.MethodPut, url, bytes.NewReader(body))
+	req, err := c.client.NewRequest(http.MethodPut, url, payload)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-
-	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.client.Do(c.ctx, req, nil)
 	if err != nil {

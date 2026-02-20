@@ -553,7 +553,7 @@ func (s *Syncer) syncActionsSecrets(
 
 			result.Changes = append(result.Changes, Change{
 				Field:   fmt.Sprintf("actions_secret.%s", secret.Name),
-				Current: "<unreadable>",
+				Current: "<write-only>",
 				Desired: fmt.Sprintf("set (%s)", desc),
 			})
 		}
@@ -594,7 +594,7 @@ func (s *Syncer) syncActionsSecrets(
 
 		result.Changes = append(result.Changes, Change{
 			Field:   fmt.Sprintf("actions_secret.%s", name),
-			Current: "<unreadable>",
+			Current: "<write-only>",
 			Desired: "set",
 		})
 	}

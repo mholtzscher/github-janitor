@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	ufcli "github.com/urfave/cli/v3"
 
@@ -110,6 +111,16 @@ func printResults(results []reposync.Result) {
 		}
 
 		for _, change := range result.Changes {
+			if strings.HasPrefix(change.Field, "actions_secret.") {
+				fmt.Printf( //nolint:forbidigo // CLI output
+					"   %s: %s (%v)\n",
+					common.Cyan(change.Field),
+					common.Yellow("write-only on GitHub; value hidden"),
+					change.Desired,
+				)
+				continue
+			}
+
 			arrow := common.Yellow("→")
 			if reflect.DeepEqual(change.Current, change.Desired) {
 				arrow = "="
