@@ -87,5 +87,6 @@ settings:
 
   security:
     dependabot_alerts: true
+    dependabot_security_updates: true
   
 
