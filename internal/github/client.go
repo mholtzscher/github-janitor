@@ -52,6 +52,8 @@ func NewClient(token string) (*Client, error) {
 		}
 	}
 
+	token = strings.TrimSpace(token)
+
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -69,7 +71,7 @@ func NewClient(token string) (*Client, error) {
 func detectToken() (string, string, error) {
 	// First, try GITHUB_TOKEN environment variable
 	if token := os.Getenv(EnvToken); token != "" {
-		return token, TokenSourceEnvVar, nil
+		return strings.TrimSpace(token), TokenSourceEnvVar, nil
 	}
 
 	// Second, try to get token from gh CLI
