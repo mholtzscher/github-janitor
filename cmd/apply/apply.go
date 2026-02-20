@@ -25,13 +25,13 @@ func NewCommand() *ufcli.Command {
 				Usage: "Preview changes without applying them",
 			},
 		},
-		Action: func(_ context.Context, cmd *ufcli.Command) error {
-			return runApply(cmd, cmd.Bool(common.FlagDryRun))
+		Action: func(ctx context.Context, cmd *ufcli.Command) error {
+			return runApply(ctx, cmd, cmd.Bool(common.FlagDryRun))
 		},
 	}
 }
 
-func runApply(cmd *ufcli.Command, dryRun bool) error {
+func runApply(ctx context.Context, cmd *ufcli.Command, dryRun bool) error {
 	configPath := cmd.String(common.FlagConfig)
 	token := cmd.String(common.FlagToken)
 
@@ -75,7 +75,7 @@ func runApply(cmd *ufcli.Command, dryRun bool) error {
 	fmt.Printf("Repositories: %s\n\n", modeColor(len(cfg.Repositories))) //nolint:forbidigo // CLI output
 
 	// Execute apply
-	results, err := syncer.SyncAll(dryRun)
+	results, err := syncer.SyncAll(ctx, dryRun)
 	if err != nil {
 		return fmt.Errorf("apply failed: %w", err)
 	}

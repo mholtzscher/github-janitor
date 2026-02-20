@@ -1,6 +1,7 @@
 package reposync
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -8,6 +9,7 @@ import (
 
 	"github.com/mholtzscher/github-janitor/internal/config"
 	"github.com/mholtzscher/github-janitor/internal/github"
+	"github.com/mholtzscher/github-janitor/internal/secrets"
 )
 
 // Syncer orchestrates the synchronization of repository settings.
@@ -21,6 +23,9 @@ type githubAPI interface {
 	UpdateRepositorySettings(owner, name string, patch *gogithub.Repository) error
 	GetBranchProtection(owner, name, pattern string) (*github.BranchProtectionInfo, error)
 	UpdateBranchProtection(owner, name string, protection *github.BranchProtectionInfo) error
+	GetActionsSecretPublicKey(owner, name string) (*github.ActionsSecretPublicKey, error)
+	EncryptSecret(publicKeyB64, secretValue string) (string, error)
+	SetActionsSecret(owner, name, secretName, encryptedValue, keyID string) error
 }
 
 // Change represents a single setting change.
@@ -106,11 +111,25 @@ func NewSyncer(client *github.Client, cfg *config.Config) *Syncer {
 }
 
 // SyncAll syncs all configured repositories.
-func (s *Syncer) SyncAll(dryRun bool) ([]Result, error) {
+func (s *Syncer) SyncAll(ctx context.Context, dryRun bool) ([]Result, error) {
 	results := make([]Result, 0, len(s.config.Repositories))
 
+	// Resolve secrets once before iterating repos (only in apply mode)
+	var secretValues map[string]string
+
+	if !dryRun && len(s.config.Settings.ActionsSecrets) > 0 {
+		resolver := secrets.NewResolver(s.config.Settings.ActionsSecrets)
+
+		values, err := resolver.ResolveAll(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve secrets: %w", err)
+		}
+
+		secretValues = values
+	}
+
 	for _, repo := range s.config.Repositories {
-		result := s.syncRepository(repo, dryRun)
+		result := s.syncRepository(ctx, repo, dryRun, secretValues)
 		results = append(results, result)
 	}
 
@@ -119,8 +138,10 @@ func (s *Syncer) SyncAll(dryRun bool) ([]Result, error) {
 
 // syncRepository syncs a single repository.
 func (s *Syncer) syncRepository( //nolint:cyclop,funlen,gocognit,gocyclo // Sync logic maps many settings
+	ctx context.Context,
 	repo config.Repository,
 	dryRun bool,
+	secretValues map[string]string,
 ) Result {
 	result := Result{
 		Repository: repo.FullName(),
@@ -342,6 +363,15 @@ func (s *Syncer) syncRepository( //nolint:cyclop,funlen,gocognit,gocyclo // Sync
 		}
 	}
 
+	// Sync actions secrets if configured
+	if len(s.config.Settings.ActionsSecrets) > 0 {
+		secretsResult := s.syncActionsSecrets(ctx, repo, dryRun, secretValues)
+		result.Changes = append(result.Changes, secretsResult.Changes...)
+		if secretsResult.Error != nil {
+			result.Error = secretsResult.Error
+		}
+	}
+
 	return result
 }
 
@@ -493,6 +523,80 @@ func (s *Syncer) syncBranchProtection( //nolint:funlen,gocognit // Protection se
 			result.Error = fmt.Errorf("failed to update branch protection: %w", updateErr)
 			return result
 		}
+	}
+
+	return result
+}
+
+// syncActionsSecrets syncs GitHub Actions secrets for a repository.
+func (s *Syncer) syncActionsSecrets(
+	_ context.Context,
+	repo config.Repository,
+	dryRun bool,
+	secretValues map[string]string,
+) Result {
+	result := Result{
+		Repository: fmt.Sprintf("%s (secrets)", repo.FullName()),
+		Changes:    make([]Change, 0),
+	}
+
+	// In dry-run mode, just track that secrets would be set (don't resolve values)
+	if dryRun {
+		resolver := secrets.NewResolver(s.config.Settings.ActionsSecrets)
+
+		for _, secret := range s.config.Settings.ActionsSecrets {
+			source, _ := resolver.GetSource(secret.Name)
+			desc := "unknown"
+			if source != nil {
+				desc = source.Describe()
+			}
+
+			result.Changes = append(result.Changes, Change{
+				Field:   fmt.Sprintf("actions_secret.%s", secret.Name),
+				Current: "<unreadable>",
+				Desired: fmt.Sprintf("set (%s)", desc),
+			})
+		}
+
+		return result
+	}
+
+	// Apply mode: secretValues should already be resolved
+	if len(secretValues) == 0 {
+		return result
+	}
+
+	// Fetch public key once for all secrets
+	publicKey, err := s.client.GetActionsSecretPublicKey(repo.Owner, repo.Name)
+	if err != nil {
+		result.Error = fmt.Errorf("failed to get public key: %w", err)
+		return result
+	}
+
+	// Set each secret
+	for name, value := range secretValues {
+		encryptedValue, encErr := s.client.EncryptSecret(publicKey.Key, value)
+		if encErr != nil {
+			result.Error = fmt.Errorf("failed to encrypt secret %s: %w", name, encErr)
+			return result
+		}
+
+		if setErr := s.client.SetActionsSecret(
+			repo.Owner,
+			repo.Name,
+			name,
+			encryptedValue,
+			publicKey.KeyID,
+		); setErr != nil {
+			result.Error = fmt.Errorf("failed to set secret %s: %w", name, setErr)
+			return result
+		}
+
+		result.Changes = append(result.Changes, Change{
+			Field:   fmt.Sprintf("actions_secret.%s", name),
+			Current: "<unreadable>",
+			Desired: "set",
+		})
 	}
 
 	return result

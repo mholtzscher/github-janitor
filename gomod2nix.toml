@@ -22,6 +22,9 @@ schema = 3
   [mod."github.com/urfave/cli/v3"]
     version = "v3.6.2"
     hash = "sha256-GeTwfmXv2okvX2kmMREozvH4PH6ihPNVFSNSWrW+gyQ="
+  [mod."golang.org/x/crypto"]
+    version = "v0.36.0"
+    hash = "sha256-Np+suvZdMOXALDm4m8nDNa+QsvUV0rE0PEINuxCoKGM="
   [mod."golang.org/x/oauth2"]
     version = "v0.34.0"
     hash = "sha256-5eqpGGxJ7FJsPmfRek6roeGmkWHBMJaWYXyz8gXJsS4="

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"slices"
 
 	"gopkg.in/yaml.v3"
@@ -89,6 +90,9 @@ type Settings struct {
 	GitHubPages *GitHubPages `yaml:"github_pages,omitempty"`
 
 	BranchProtection *BranchProtection `yaml:"branch_protection,omitempty"`
+
+	// ActionsSecrets configures GitHub Actions secrets for all repositories.
+	ActionsSecrets []ActionsSecret `yaml:"actions_secrets,omitempty"`
 }
 
 // GitHubPages represents GitHub Pages configuration.
@@ -118,6 +122,75 @@ type BranchProtection struct {
 	RequireConversationResolution *bool `yaml:"require_conversation_resolution,omitempty"`
 	AllowForcePushes              *bool `yaml:"allow_force_pushes,omitempty"`
 	AllowDeletions                *bool `yaml:"allow_deletions,omitempty"`
+}
+
+// ActionsSecret represents a GitHub Actions secret configuration.
+type ActionsSecret struct {
+	Name    string   `yaml:"name"`
+	Env     *string  `yaml:"env,omitempty"`
+	Command []string `yaml:"command,omitempty"`
+}
+
+// SecretNamePattern validates secret names: must start with letter, contain only uppercase letters, digits, underscores.
+var secretNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+
+// Validate checks if the secret configuration is valid.
+func (s ActionsSecret) Validate() error {
+	if s.Name == "" {
+		return errors.New("actions_secret: name is required")
+	}
+
+	if len(s.Name) > MaxSecretNameLength {
+		return fmt.Errorf("actions_secret %s: name exceeds %d characters", s.Name, MaxSecretNameLength)
+	}
+
+	if !secretNamePattern.MatchString(s.Name) {
+		return fmt.Errorf("actions_secret %s: name must match pattern ^[A-Z][A-Z0-9_]*$", s.Name)
+	}
+
+	// Exactly one source must be specified
+	hasEnv := s.Env != nil && *s.Env != ""
+	hasCommand := len(s.Command) > 0
+
+	if !hasEnv && !hasCommand {
+		return fmt.Errorf("actions_secret %s: exactly one of 'env' or 'command' is required", s.Name)
+	}
+
+	if hasEnv && hasCommand {
+		return fmt.Errorf("actions_secret %s: only one of 'env' or 'command' can be specified", s.Name)
+	}
+
+	if hasCommand && s.Command[0] == "" {
+		return fmt.Errorf("actions_secret %s: command must have a non-empty executable", s.Name)
+	}
+
+	return nil
+}
+
+// SourceType returns the type of source for this secret.
+func (s ActionsSecret) SourceType() string {
+	if s.Env != nil && *s.Env != "" {
+		return "env"
+	}
+
+	if len(s.Command) > 0 {
+		return "command"
+	}
+
+	return "unknown"
+}
+
+// SourceDescription returns a safe description of the source (no values).
+func (s ActionsSecret) SourceDescription() string {
+	if s.Env != nil && *s.Env != "" {
+		return fmt.Sprintf("env:%s", *s.Env)
+	}
+
+	if len(s.Command) > 0 {
+		return fmt.Sprintf("command:%s", s.Command[0])
+	}
+
+	return "unknown"
 }
 
 // Load reads and parses the configuration file.
@@ -203,8 +276,25 @@ func (c *Config) Validate() error { //nolint:gocognit // Validation logic is inh
 		}
 	}
 
+	// Validate actions secrets
+	seenNames := make(map[string]bool)
+	for _, secret := range c.Settings.ActionsSecrets {
+		if err := secret.Validate(); err != nil {
+			return err
+		}
+
+		if seenNames[secret.Name] {
+			return fmt.Errorf("actions_secret %s: duplicate name", secret.Name)
+		}
+
+		seenNames[secret.Name] = true
+	}
+
 	return nil
 }
+
+// MaxSecretNameLength is the maximum length for a GitHub Actions secret name.
+const MaxSecretNameLength = 64
 
 // contains checks if a string slice contains a value.
 func contains(slice []string, item string) bool {
@@ -277,5 +367,15 @@ settings:
     require_conversation_resolution: true
     allow_force_pushes: false
     allow_deletions: false
+
+  # GitHub Actions secrets (applied to all repos)
+  # Values are resolved at runtime - never stored in config
+  actions_secrets:
+    # From environment variable
+    # - name: NPM_TOKEN
+    #   env: NPM_TOKEN
+    # From command (e.g., 1Password CLI)
+    # - name: AWS_ACCESS_KEY_ID
+    #   command: ["op", "read", "op://vault/item/access_key_id"]
 `
 }

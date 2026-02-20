@@ -23,7 +23,7 @@ func NewCommand() *ufcli.Command {
 	}
 }
 
-func runPlan(_ context.Context, cmd *ufcli.Command) error {
+func runPlan(ctx context.Context, cmd *ufcli.Command) error {
 	configPath := cmd.String(common.FlagConfig)
 	token := cmd.String(common.FlagToken)
 
@@ -64,7 +64,7 @@ func runPlan(_ context.Context, cmd *ufcli.Command) error {
 	fmt.Printf("Repositories: %s\n\n", modeColor(len(cfg.Repositories))) //nolint:forbidigo // CLI output
 
 	// Execute apply in dry-run mode
-	results, err := syncer.SyncAll(true)
+	results, err := syncer.SyncAll(ctx, true)
 	if err != nil {
 		return fmt.Errorf("plan failed: %w", err)
 	}

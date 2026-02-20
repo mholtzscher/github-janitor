@@ -1,7 +1,11 @@
 package github
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v82/github"
+	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/oauth2"
 )
 
@@ -499,5 +504,92 @@ func (c *Client) updateRequiredSignatures(owner, name, pattern string, required 
 			err,
 		)
 	}
+	return nil
+}
+
+// ActionsSecretPublicKey represents the public key for encrypting secrets.
+type ActionsSecretPublicKey struct {
+	KeyID string `json:"key_id"`
+	Key   string `json:"key"`
+}
+
+// GetActionsSecretPublicKey fetches the public key for encrypting repository secrets.
+func (c *Client) GetActionsSecretPublicKey(owner, name string) (*ActionsSecretPublicKey, error) {
+	url := fmt.Sprintf("repos/%s/%s/actions/secrets/public-key", owner, name)
+	req, err := c.client.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var key ActionsSecretPublicKey
+	resp, err := c.client.Do(c.ctx, req, &key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get public key: %w", err)
+	}
+	defer resp.Body.Close()
+
+	return &key, nil
+}
+
+// EncryptSecret encrypts a secret value using the repository's public key.
+// Uses libsodium sealed box encryption (box.SealAnonymous).
+func (c *Client) EncryptSecret(publicKeyB64, secretValue string) (string, error) {
+	// Decode the Base64 public key
+	decodedPubKey, err := base64.StdEncoding.DecodeString(publicKeyB64)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode public key: %w", err)
+	}
+
+	// NaCl public keys are 32 bytes
+	const publicKeySize = 32
+	if len(decodedPubKey) != publicKeySize {
+		return "", fmt.Errorf("invalid public key length: expected %d bytes, got %d", publicKeySize, len(decodedPubKey))
+	}
+
+	// Copy into [32]byte array (NaCl requires fixed-size keys)
+	var peersPubKey [publicKeySize]byte
+	copy(peersPubKey[:], decodedPubKey)
+
+	// Encrypt using sealed box (anonymous encryption)
+	encrypted, err := box.SealAnonymous(nil, []byte(secretValue), &peersPubKey, rand.Reader)
+	if err != nil {
+		return "", fmt.Errorf("failed to encrypt secret: %w", err)
+	}
+
+	// Return Base64-encoded encrypted value
+	return base64.StdEncoding.EncodeToString(encrypted), nil
+}
+
+// SetActionsSecret creates or updates a repository secret.
+func (c *Client) SetActionsSecret(owner, name, secretName, encryptedValue, keyID string) error {
+	url := fmt.Sprintf("repos/%s/%s/actions/secrets/%s", owner, name, secretName)
+
+	payload := map[string]string{
+		"encrypted_value": encryptedValue,
+		"key_id":          keyID,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := c.client.NewRequest(http.MethodPut, url, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.client.Do(c.ctx, req, nil)
+	if err != nil {
+		return fmt.Errorf("failed to set secret: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
 	return nil
 }
