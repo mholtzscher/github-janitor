@@ -80,9 +80,9 @@ settings:
     allow_deletions: false
 
   actions_secrets:
-    - name: PAT
-      command: ["op" ,"read" ,"op://personal/cachix/gha"]
     - name: CACHIX_AUTH_TOKEN
+      command: ["op" ,"read" ,"op://personal/cachix/gha"]
+    - name: PAT
       command: ["op" ,"read" , "op://personal/github/github-actions-pat"]
 
   security:
