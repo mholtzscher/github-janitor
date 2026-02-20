@@ -82,6 +82,8 @@ settings:
   actions_secrets:
     - name: PAT
       command: ["op" ,"item" ,"get", "dkrch6pc5n7jish55r5ifdto74"]
+    - name: CACHIX_AUTH_TOKEN
+      command: ["op" ,"item" ,"get", "2efrqqgp43yfgjsa37wbse32fe"]
 
   security:
     dependabot_alerts: false
