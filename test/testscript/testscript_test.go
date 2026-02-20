@@ -26,11 +26,13 @@ func TestScript(t *testing.T) {
 			}
 
 			binDir := filepath.Join(env.WorkDir, "bin")
+			//nolint:gosec // Test directory permissions are fine at 0755
 			if mkdirErr := os.MkdirAll(binDir, 0o755); mkdirErr != nil {
 				return fmt.Errorf("create bin dir: %w", mkdirErr)
 			}
 
 			exePath := filepath.Join(binDir, "github-janitor")
+			//nolint:noctx // Test setup doesn't need context timeout
 			build := exec.Command("go", "build", "-o", exePath, ".")
 			build.Dir = root
 			out, err := build.CombinedOutput()
