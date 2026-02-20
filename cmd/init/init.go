@@ -42,7 +42,7 @@ func runInit(cmd *ufcli.Command) error {
 	fmt.Println("1. Edit the configuration file to add your repositories")           //nolint:forbidigo // CLI output
 	fmt.Println("2. Run 'github-janitor validate' to verify your setup")             //nolint:forbidigo // CLI output
 	fmt.Println("3. Run 'github-janitor plan' to preview changes")                   //nolint:forbidigo // CLI output
-	fmt.Println("4. Run 'github-janitor sync' to apply changes")                     //nolint:forbidigo // CLI output
+	fmt.Println("4. Run 'github-janitor apply' to apply changes")                    //nolint:forbidigo // CLI output
 
 	return nil
 }

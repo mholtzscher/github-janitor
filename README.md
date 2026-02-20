@@ -2,7 +2,7 @@
 
 A CLI tool for managing GitHub repository settings as code. 
 
-Instead of clicking through the GitHub UI to configure branch protections, merge methods, and repo features for your projects, you can define them in a `github-janitor.yaml` file and sync them across multiple repositories at once.
+Instead of clicking through the GitHub UI to configure branch protections, merge methods, and repo features for your projects, you can define them in a `github-janitor.yaml` file and apply them across multiple repositories at once.
 
 ## Installation
 
@@ -46,7 +46,7 @@ github-janitor plan
 
 Apply the settings to all configured repositories:
 ```bash
-github-janitor sync
+github-janitor apply
 ```
 
 ## Configuration

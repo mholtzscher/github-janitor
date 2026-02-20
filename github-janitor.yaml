@@ -56,7 +56,7 @@ settings:
     enabled: false
 
   # Branch protection (applied to all repos)
-  # NOTE: before running `sync`, set status_check_contexts to the actual checks your repos use.
+  # NOTE: before running `apply`, set status_check_contexts to the actual checks your repos use.
   branch_protection:
     enabled: true
     pattern: "main"
