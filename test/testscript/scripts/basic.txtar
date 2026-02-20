@@ -34,6 +34,11 @@ exec github-janitor help init
 stdout 'Generate an example configuration file'
 ! stderr .
 
+# Test help for apply subcommand
+exec github-janitor help apply
+stdout 'Apply settings to all configured repositories'
+! stderr .
+
 # Test config env var
 env GITHUB_JANITOR_CONFIG=env.yaml
 exec github-janitor init

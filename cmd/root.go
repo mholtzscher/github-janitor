@@ -7,10 +7,10 @@ import (
 	"github.com/fatih/color"
 	ufcli "github.com/urfave/cli/v3"
 
+	applycmd "github.com/mholtzscher/github-janitor/cmd/apply"
 	"github.com/mholtzscher/github-janitor/cmd/common"
 	initcmd "github.com/mholtzscher/github-janitor/cmd/init"
 	"github.com/mholtzscher/github-janitor/cmd/plan"
-	reposync "github.com/mholtzscher/github-janitor/cmd/sync"
 	"github.com/mholtzscher/github-janitor/cmd/validate"
 	"github.com/mholtzscher/github-janitor/internal/config"
 	"github.com/mholtzscher/github-janitor/internal/github"
@@ -51,7 +51,7 @@ func Run(ctx context.Context, args []string) error {
 			},
 		},
 		Commands: []*ufcli.Command{
-			reposync.NewCommand(),
+			applycmd.NewCommand(),
 			plan.NewCommand(),
 			validate.NewCommand(),
 			initcmd.NewCommand(),

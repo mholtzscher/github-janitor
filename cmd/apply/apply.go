@@ -1,5 +1,5 @@
-// Package reposync provides the sync subcommand.
-package reposync
+// Package apply provides the apply subcommand.
+package apply
 
 import (
 	"context"
@@ -14,10 +14,10 @@ import (
 	reposync "github.com/mholtzscher/github-janitor/internal/sync"
 )
 
-// NewCommand creates the sync command.
+// NewCommand creates the apply command.
 func NewCommand() *ufcli.Command {
 	return &ufcli.Command{
-		Name:  "sync",
+		Name:  "apply",
 		Usage: "Apply settings to all configured repositories",
 		Flags: []ufcli.Flag{
 			&ufcli.BoolFlag{
@@ -26,12 +26,12 @@ func NewCommand() *ufcli.Command {
 			},
 		},
 		Action: func(_ context.Context, cmd *ufcli.Command) error {
-			return runSync(cmd, cmd.Bool(common.FlagDryRun))
+			return runApply(cmd, cmd.Bool(common.FlagDryRun))
 		},
 	}
 }
 
-func runSync(cmd *ufcli.Command, dryRun bool) error {
+func runApply(cmd *ufcli.Command, dryRun bool) error {
 	configPath := cmd.String(common.FlagConfig)
 	token := cmd.String(common.FlagToken)
 
@@ -74,10 +74,10 @@ func runSync(cmd *ufcli.Command, dryRun bool) error {
 	fmt.Printf("Mode: %s\n", mode)                                       //nolint:forbidigo // CLI output
 	fmt.Printf("Repositories: %s\n\n", modeColor(len(cfg.Repositories))) //nolint:forbidigo // CLI output
 
-	// Execute sync
+	// Execute apply
 	results, err := syncer.SyncAll(dryRun)
 	if err != nil {
-		return fmt.Errorf("sync failed: %w", err)
+		return fmt.Errorf("apply failed: %w", err)
 	}
 
 	// Print results
@@ -88,7 +88,7 @@ func runSync(cmd *ufcli.Command, dryRun bool) error {
 
 func printResults(results []reposync.Result) {
 	fmt.Println("\n" + common.BoldWhite(common.Repeat("=", common.SeparatorWidth))) //nolint:forbidigo // CLI output
-	fmt.Println(common.BoldWhite("SYNC RESULTS"))                                   //nolint:forbidigo // CLI output
+	fmt.Println(common.BoldWhite("APPLY RESULTS"))                                  //nolint:forbidigo // CLI output
 	fmt.Println(common.BoldWhite(common.Repeat("=", common.SeparatorWidth)))        //nolint:forbidigo // CLI output
 
 	for _, result := range results {

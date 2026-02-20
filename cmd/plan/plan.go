@@ -63,10 +63,10 @@ func runPlan(_ context.Context, cmd *ufcli.Command) error {
 	fmt.Printf("Mode: %s\n", mode)                                       //nolint:forbidigo // CLI output
 	fmt.Printf("Repositories: %s\n\n", modeColor(len(cfg.Repositories))) //nolint:forbidigo // CLI output
 
-	// Execute sync in dry-run mode
+	// Execute apply in dry-run mode
 	results, err := syncer.SyncAll(true)
 	if err != nil {
-		return fmt.Errorf("sync failed: %w", err)
+		return fmt.Errorf("plan failed: %w", err)
 	}
 
 	// Print results
@@ -77,7 +77,7 @@ func runPlan(_ context.Context, cmd *ufcli.Command) error {
 
 func printResults(results []reposync.Result) {
 	fmt.Println("\n" + common.BoldWhite(common.Repeat("=", common.SeparatorWidth))) //nolint:forbidigo // CLI output
-	fmt.Println(common.BoldWhite("SYNC RESULTS"))                                   //nolint:forbidigo // CLI output
+	fmt.Println(common.BoldWhite("PLAN RESULTS"))                                   //nolint:forbidigo // CLI output
 	fmt.Println(common.BoldWhite(common.Repeat("=", common.SeparatorWidth)))        //nolint:forbidigo // CLI output
 
 	for _, result := range results {
