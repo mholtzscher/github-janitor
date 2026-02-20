@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	ufcli "github.com/urfave/cli/v3"
 
@@ -25,13 +26,13 @@ func NewCommand() *ufcli.Command {
 				Usage: "Preview changes without applying them",
 			},
 		},
-		Action: func(_ context.Context, cmd *ufcli.Command) error {
-			return runApply(cmd, cmd.Bool(common.FlagDryRun))
+		Action: func(ctx context.Context, cmd *ufcli.Command) error {
+			return runApply(ctx, cmd, cmd.Bool(common.FlagDryRun))
 		},
 	}
 }
 
-func runApply(cmd *ufcli.Command, dryRun bool) error {
+func runApply(ctx context.Context, cmd *ufcli.Command, dryRun bool) error {
 	configPath := cmd.String(common.FlagConfig)
 	token := cmd.String(common.FlagToken)
 
@@ -75,7 +76,7 @@ func runApply(cmd *ufcli.Command, dryRun bool) error {
 	fmt.Printf("Repositories: %s\n\n", modeColor(len(cfg.Repositories))) //nolint:forbidigo // CLI output
 
 	// Execute apply
-	results, err := syncer.SyncAll(dryRun)
+	results, err := syncer.SyncAll(ctx, dryRun)
 	if err != nil {
 		return fmt.Errorf("apply failed: %w", err)
 	}
@@ -110,6 +111,16 @@ func printResults(results []reposync.Result) {
 		}
 
 		for _, change := range result.Changes {
+			if strings.HasPrefix(change.Field, "actions_secret.") {
+				fmt.Printf( //nolint:forbidigo // CLI output
+					"   %s: %s (%v)\n",
+					common.Cyan(change.Field),
+					common.Yellow("write-only on GitHub; value hidden"),
+					change.Desired,
+				)
+				continue
+			}
+
 			arrow := common.Yellow("→")
 			if reflect.DeepEqual(change.Current, change.Desired) {
 				arrow = "="

@@ -1,6 +1,7 @@
 package reposync //nolint:testpackage // Tests internal implementation details
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"testing"
@@ -31,6 +32,25 @@ type fakeGitHubClient struct {
 	getBranchResp     *github.BranchProtectionInfo
 	getBranchErr      error
 	updateBranchErr   error
+	publicKeyResp     *github.ActionsSecretPublicKey
+	publicKeyErr      error
+	setSecretErr      error
+	lastSecretName    string
+	lastSecretValue   string
+}
+
+func (f *fakeGitHubClient) GetActionsSecretPublicKey(_, _ string) (*github.ActionsSecretPublicKey, error) {
+	return f.publicKeyResp, f.publicKeyErr
+}
+
+func (f *fakeGitHubClient) EncryptSecret(_, secretValue string) (string, error) {
+	return "encrypted-" + secretValue, nil
+}
+
+func (f *fakeGitHubClient) SetActionsSecret(_, _, secretName, encryptedValue, _ string) error {
+	f.lastSecretName = secretName
+	f.lastSecretValue = encryptedValue
+	return f.setSecretErr
 }
 
 func (f *fakeGitHubClient) GetRepository(owner, name string) (*github.RepositoryInfo, error) {
@@ -251,7 +271,7 @@ func TestSyncRepository_SkipsWhenRepoDoesNotExist(t *testing.T) {
 	fake := &fakeGitHubClient{getRepoResp: &github.RepositoryInfo{Owner: "o", Name: "r", Exists: false}}
 	s := &Syncer{client: fake, config: &config.Config{Repositories: []config.Repository{repo}}}
 
-	result := s.syncRepository(repo, false)
+	result := s.syncRepository(context.Background(), repo, false, nil)
 	if result.Error != nil {
 		t.Fatalf("Error = %v; want nil", result.Error)
 	}
@@ -284,7 +304,7 @@ func TestSyncRepository_DryRunDoesNotUpdate(t *testing.T) {
 	}
 
 	s := &Syncer{client: fake, config: cfg}
-	result := s.syncRepository(repo, true)
+	result := s.syncRepository(context.Background(), repo, true, nil)
 	if result.Error != nil {
 		t.Fatalf("Error = %v; want nil", result.Error)
 	}
@@ -327,7 +347,7 @@ func TestSyncRepository_AppliesUpdateWhenChanged(t *testing.T) {
 	}
 
 	s := &Syncer{client: fake, config: cfg}
-	result := s.syncRepository(repo, false)
+	result := s.syncRepository(context.Background(), repo, false, nil)
 	if result.Error != nil {
 		t.Fatalf("Error = %v; want nil", result.Error)
 	}
@@ -362,7 +382,7 @@ func TestSyncRepository_PropagatesUpdateError(t *testing.T) {
 	}
 
 	s := &Syncer{client: fake, config: cfg}
-	result := s.syncRepository(repo, false)
+	result := s.syncRepository(context.Background(), repo, false, nil)
 	if result.Error == nil {
 		t.Fatal("Error = nil; want error")
 	}

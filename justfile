@@ -43,7 +43,7 @@ vet:
 
 # Run comprehensive linting
 lint:
-    golangci-lint run
+    go tool golangci-lint run
 
 # Run all checks (format, vet, lint, test, tidy, gomod2nix)
 check: fmt vet lint test tidy gomod2nix

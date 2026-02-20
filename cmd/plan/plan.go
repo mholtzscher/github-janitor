@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	ufcli "github.com/urfave/cli/v3"
 
@@ -23,7 +24,7 @@ func NewCommand() *ufcli.Command {
 	}
 }
 
-func runPlan(_ context.Context, cmd *ufcli.Command) error {
+func runPlan(ctx context.Context, cmd *ufcli.Command) error {
 	configPath := cmd.String(common.FlagConfig)
 	token := cmd.String(common.FlagToken)
 
@@ -64,7 +65,7 @@ func runPlan(_ context.Context, cmd *ufcli.Command) error {
 	fmt.Printf("Repositories: %s\n\n", modeColor(len(cfg.Repositories))) //nolint:forbidigo // CLI output
 
 	// Execute apply in dry-run mode
-	results, err := syncer.SyncAll(true)
+	results, err := syncer.SyncAll(ctx, true)
 	if err != nil {
 		return fmt.Errorf("plan failed: %w", err)
 	}
@@ -99,6 +100,16 @@ func printResults(results []reposync.Result) {
 		}
 
 		for _, change := range result.Changes {
+			if strings.HasPrefix(change.Field, "actions_secret.") {
+				fmt.Printf( //nolint:forbidigo // CLI output
+					"   %s: %s (%v)\n",
+					common.Cyan(change.Field),
+					common.Yellow("write-only on GitHub; diff unavailable"),
+					change.Desired,
+				)
+				continue
+			}
+
 			arrow := common.Yellow("→ ")
 			if reflect.DeepEqual(change.Current, change.Desired) {
 				arrow = "="
