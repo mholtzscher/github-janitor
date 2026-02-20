@@ -86,6 +86,6 @@ settings:
       command: ["op" ,"item" ,"get", "2efrqqgp43yfgjsa37wbse32fe"]
 
   security:
-    dependabot_alerts: false
+    dependabot_alerts: true
   
 
