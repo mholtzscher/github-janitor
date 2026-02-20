@@ -602,8 +602,8 @@ schema = 3
     version = "v0.33.0"
     hash = "sha256-NR+ZSeQKbfVP4Cu/SlNIivMa+c1OMyOSMxLSjX+LZJI="
   [mod."golang.org/x/oauth2"]
-    version = "v0.34.0"
-    hash = "sha256-5eqpGGxJ7FJsPmfRek6roeGmkWHBMJaWYXyz8gXJsS4="
+    version = "v0.35.0"
+    hash = "sha256-QeleoXu+9K3LJZiw6/iPR+EQzi/OLDBTFdrP2/d1XN8="
   [mod."golang.org/x/sync"]
     version = "v0.19.0"
     hash = "sha256-RbRZ+sKZUurOczGhhzOoY/sojTlta3H9XjL4PXX/cno="

@@ -36,7 +36,7 @@ func (s *EnvVarSource) Resolve(_ context.Context) (string, error) {
 		return "", fmt.Errorf("environment variable %s is empty", s.Name)
 	}
 
-	return strings.TrimSpace(value), nil
+	return value, nil
 }
 
 // Describe returns a safe description of the source.
@@ -65,7 +65,7 @@ func (s *CommandSource) Resolve(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("command %s failed: %w", s.Argv[0], err)
 	}
 
-	value := strings.TrimSpace(stdout.String())
+	value := strings.TrimSuffix(stdout.String(), "\n")
 	if value == "" {
 		return "", fmt.Errorf("command %s returned empty value", s.Argv[0])
 	}
