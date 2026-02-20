@@ -1,62 +1,57 @@
 # github-janitor
 
-A Go CLI tool built with Nix
+A CLI tool for managing GitHub repository settings as code. 
+
+Instead of clicking through the GitHub UI to configure branch protections, merge methods, and repo features for your projects, you can define them in a `github-janitor.yaml` file and sync them across multiple repositories at once.
 
 ## Installation
 
-### Using Nix
-
+**Nix**
 ```bash
 nix run github:mholtzscher/github-janitor
 ```
 
-### Using Homebrew
-
+**Homebrew**
 ```bash
-# One-liner
 brew install mholtzscher/tap/github-janitor
-
-# Or add the tap explicitly
-brew tap mholtzscher/tap
-brew install github-janitor
-
-# Upgrade
-brew upgrade github-janitor
-
-# Verify
-github-janitor --version
 ```
 
-### From Source
-
+**From source**
 ```bash
 git clone https://github.com/mholtzscher/github-janitor.git
 cd github-janitor
 nix build
 ```
 
+## Authentication
+
+The tool needs GitHub API access. It will automatically use your credentials if you're logged in with the GitHub CLI (`gh auth login`). Alternatively, you can provide a personal access token via the `GITHUB_TOKEN` environment variable.
+
 ## Usage
 
+Generate a default configuration file in your current directory:
 ```bash
-# Show help
-github-janitor --help
-
-# Initialize configuration file
 github-janitor init
+```
 
-# Validate configuration
+Validate the config syntax:
+```bash
 github-janitor validate
+```
 
-# Preview changes (dry-run)
+Preview what changes will be made (dry run):
+```bash
 github-janitor plan
+```
 
-# Apply changes to all repositories
+Apply the settings to all configured repositories:
+```bash
 github-janitor sync
 ```
 
 ## Configuration
 
-Create a `github-janitor.yaml` file to define your repositories and settings:
+Your `github-janitor.yaml` file defines both the target repositories and the settings you want to enforce. 
 
 ```yaml
 repositories:
@@ -66,47 +61,40 @@ repositories:
     name: repo2
 
 settings:
-  # Merge methods
+  description: "A brief description of the repository"
+  homepage: "https://example.com"
+  topics: ["go", "cli", "automation"]
+  visibility: public
+  default_branch: "main"
+  archived: false
+
+  # Features
+  has_issues: true
+  has_projects: false
+  has_wiki: false
+  has_discussions: true
+
+  # Merge Settings
   allow_merge_commit: false
   allow_squash_merge: true
   allow_rebase_merge: true
   delete_branch_on_merge: true
+  allow_auto_merge: false
 
-  # Merge commit messages
   squash_merge_commit_title: PR_TITLE      # PR_TITLE, COMMIT_OR_PR_TITLE
   squash_merge_commit_message: PR_BODY     # PR_BODY, COMMIT_MESSAGES, BLANK
   merge_commit_title: PR_TITLE             # PR_TITLE, MERGE_MESSAGE
   merge_commit_message: PR_BODY            # PR_BODY, PR_TITLE, BLANK
 
-  # Repository visibility
-  visibility: public                       # public, private
-
-  # Repository features
-  has_issues: true
-  has_projects: false
-  has_wiki: false
-  has_discussions: true
-  archived: false
-
-  # Additional settings
+  # Security & Access
   allow_update_branch: true
   web_commit_signoff_required: false
   allow_forking: true
 
-  # Repository metadata
-  description: "A brief description of the repository"
-  homepage: "https://example.com"
-  topics: ["go", "cli", "automation"]
-
-  # Repository settings
-  default_branch: "main"
-  allow_auto_merge: false
-
-  # GitHub Pages (tracks status; enabling requires manual configuration)
   github_pages:
     enabled: false
 
-  # Branch protection
+  # Branch Protection Rules
   branch_protection:
     enabled: true
     pattern: "main"
@@ -126,23 +114,18 @@ settings:
 
 ## Development
 
-This project uses Nix for reproducible development environments.
+This project uses Nix for reproducible development environments and `just` as a command runner.
 
 ```bash
-# Enter development shell
+# Enter the dev shell
 nix develop
+# Or if you use direnv: direnv allow
 
-# Or use direnv
-direnv allow
-
-# Run checks
+# Run checks (format, lint, test)
 just check
 
-# Build
+# Build locally
 just build
-
-# Run tests
-just test
 ```
 
 ## License
