@@ -13,6 +13,8 @@ repositories:
     name: today
   - owner: mholtzscher
     name: kcwater-ha
+  - owner: mholtzscher
+    name: atlas
 
 settings:
   # Merge methods
