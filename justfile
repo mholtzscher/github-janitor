@@ -46,7 +46,7 @@ lint:
     go tool golangci-lint run
 
 # Run all checks (format, vet, lint, test, tidy, gomod2nix)
-check: fmt vet lint test tidy gomod2nix
+check: tidy gomod2nix  fmt vet lint test 
 
 # Update Go dependencies
 update-deps:
