@@ -6,7 +6,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/google/go-github/v82 v82.0.0
 	github.com/rogpeppe/go-internal v1.14.1
-	github.com/urfave/cli/v3 v3.6.2
+	github.com/urfave/cli/v3 v3.7.0
 	golang.org/x/crypto v0.48.0
 	golang.org/x/oauth2 v0.35.0
 	gopkg.in/yaml.v3 v3.0.1
