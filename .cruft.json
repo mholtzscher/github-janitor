@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/mholtzscher/templates.git",
-  "commit": "1a7901d7bc77ef61a80901d5c0ccaa43c163300f",
+  "commit": "16322221634d06ed18d8ca7fdb77b5127efe7a3d",
   "context": {
     "cookiecutter": {
       "project_name": "github-janitor",
@@ -17,7 +17,7 @@
       "use_sqlc": "no",
       "go_version": "1.25",
       "_template": "https://github.com/mholtzscher/templates.git",
-      "_commit": "1a7901d7bc77ef61a80901d5c0ccaa43c163300f",
+      "_commit": "16322221634d06ed18d8ca7fdb77b5127efe7a3d",
       "_copy_without_render": [
         "test/testscript/scripts/*.txtar",
         "db/*.sql"
