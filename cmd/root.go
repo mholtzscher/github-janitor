@@ -8,7 +8,7 @@ import (
 	ufcli "github.com/urfave/cli/v3"
 
 	applycmd "github.com/mholtzscher/github-janitor/cmd/apply"
-	"github.com/mholtzscher/github-janitor/cmd/common"
+	cliutil "github.com/mholtzscher/github-janitor/cmd/common"
 	initcmd "github.com/mholtzscher/github-janitor/cmd/init"
 	"github.com/mholtzscher/github-janitor/cmd/plan"
 	"github.com/mholtzscher/github-janitor/cmd/validate"
@@ -26,25 +26,25 @@ func Run(ctx context.Context, args []string) error {
 		Usage:   "Synchronize GitHub repository settings across multiple repos",
 		Version: Version,
 		Before: func(ctx context.Context, cmd *ufcli.Command) (context.Context, error) {
-			if cmd.Bool(common.FlagNoColor) {
+			if cmd.Bool(cliutil.FlagNoColor) {
 				color.NoColor = true //nolint:reassign // Setting color.NoColor is the intended way to disable colors
 			}
 			return ctx, nil
 		},
 		Flags: []ufcli.Flag{
 			&ufcli.BoolFlag{
-				Name:  common.FlagNoColor,
+				Name:  cliutil.FlagNoColor,
 				Usage: "Disable colored output",
 			},
 			&ufcli.StringFlag{
-				Name:    common.FlagConfig,
+				Name:    cliutil.FlagConfig,
 				Aliases: []string{"c"},
 				Value:   config.DefaultFilename,
 				Usage:   "Path to configuration file",
 				Sources: ufcli.EnvVars("GITHUB_JANITOR_CONFIG"),
 			},
 			&ufcli.StringFlag{
-				Name:    common.FlagToken,
+				Name:    cliutil.FlagToken,
 				Aliases: []string{"t"},
 				Usage:   "GitHub personal access token (overrides auto-detection)",
 				Sources: ufcli.EnvVars(github.EnvToken),

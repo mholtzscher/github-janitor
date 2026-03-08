@@ -9,7 +9,7 @@ import (
 
 	ufcli "github.com/urfave/cli/v3"
 
-	"github.com/mholtzscher/github-janitor/cmd/common"
+	cliutil "github.com/mholtzscher/github-janitor/cmd/common"
 	"github.com/mholtzscher/github-janitor/internal/config"
 	"github.com/mholtzscher/github-janitor/internal/github"
 	reposync "github.com/mholtzscher/github-janitor/internal/sync"
@@ -22,19 +22,19 @@ func NewCommand() *ufcli.Command {
 		Usage: "Apply settings to all configured repositories",
 		Flags: []ufcli.Flag{
 			&ufcli.BoolFlag{
-				Name:  common.FlagDryRun,
+				Name:  cliutil.FlagDryRun,
 				Usage: "Preview changes without applying them",
 			},
 		},
 		Action: func(ctx context.Context, cmd *ufcli.Command) error {
-			return runApply(ctx, cmd, cmd.Bool(common.FlagDryRun))
+			return runApply(ctx, cmd, cmd.Bool(cliutil.FlagDryRun))
 		},
 	}
 }
 
 func runApply(ctx context.Context, cmd *ufcli.Command, dryRun bool) error {
-	configPath := cmd.String(common.FlagConfig)
-	token := cmd.String(common.FlagToken)
+	configPath := cmd.String(cliutil.FlagConfig)
+	token := cmd.String(cliutil.FlagToken)
 
 	// Load configuration
 	cfg, err := config.Load(configPath)
@@ -59,18 +59,18 @@ func runApply(ctx context.Context, cmd *ufcli.Command, dryRun bool) error {
 	}
 	fmt.Printf( //nolint:forbidigo // CLI output
 		"Authenticated as: %s (token from: %s)\n\n",
-		common.Cyan(user),
-		common.Cyan(client.TokenSource),
+		cliutil.Cyan(user),
+		cliutil.Cyan(client.TokenSource),
 	)
 
 	// Create syncer
 	syncer := reposync.NewSyncer(client, cfg)
 
-	mode := common.BoldWhite("APPLYING")
-	modeColor := common.Cyan
+	mode := cliutil.BoldWhite("APPLYING")
+	modeColor := cliutil.Cyan
 	if dryRun {
-		mode = common.Yellow("DRY-RUN (preview only)")
-		modeColor = common.Yellow
+		mode = cliutil.Yellow("DRY-RUN (preview only)")
+		modeColor = cliutil.Yellow
 	}
 	fmt.Printf("Mode: %s\n", mode)                                       //nolint:forbidigo // CLI output
 	fmt.Printf("Repositories: %s\n\n", modeColor(len(cfg.Repositories))) //nolint:forbidigo // CLI output
@@ -88,25 +88,25 @@ func runApply(ctx context.Context, cmd *ufcli.Command, dryRun bool) error {
 }
 
 func printResults(results []reposync.Result) {
-	fmt.Println("\n" + common.BoldWhite(common.Repeat("=", common.SeparatorWidth))) //nolint:forbidigo // CLI output
-	fmt.Println(common.BoldWhite("APPLY RESULTS"))                                  //nolint:forbidigo // CLI output
-	fmt.Println(common.BoldWhite(common.Repeat("=", common.SeparatorWidth)))        //nolint:forbidigo // CLI output
+	fmt.Println("\n" + cliutil.BoldWhite(cliutil.Repeat("=", cliutil.SeparatorWidth))) //nolint:forbidigo // CLI output
+	fmt.Println(cliutil.BoldWhite("APPLY RESULTS"))                                    //nolint:forbidigo // CLI output
+	fmt.Println(cliutil.BoldWhite(cliutil.Repeat("=", cliutil.SeparatorWidth)))        //nolint:forbidigo // CLI output
 
 	for _, result := range results {
-		status := common.Green("✓")
+		status := cliutil.Green("✓")
 		if result.Error != nil {
-			status = common.Red("✗")
+			status = cliutil.Red("✗")
 		}
 
 		fmt.Printf("\n%s %s\n", status, result.Repository) //nolint:forbidigo // CLI output
 
 		if result.Error != nil {
-			fmt.Printf("   %s: %s\n", common.Red("Error"), result.Error) //nolint:forbidigo // CLI output
+			fmt.Printf("   %s: %s\n", cliutil.Red("Error"), result.Error) //nolint:forbidigo // CLI output
 			continue
 		}
 
 		if !result.Exists {
-			fmt.Println("   " + common.Yellow("Skipped: repository does not exist")) //nolint:forbidigo // CLI output
+			fmt.Println("   " + cliutil.Yellow("Skipped: repository does not exist")) //nolint:forbidigo // CLI output
 			continue
 		}
 
@@ -114,20 +114,20 @@ func printResults(results []reposync.Result) {
 			if strings.HasPrefix(change.Field, "actions_secret.") {
 				fmt.Printf( //nolint:forbidigo // CLI output
 					"   %s: %s (%v)\n",
-					common.Cyan(change.Field),
-					common.Yellow("write-only on GitHub; value hidden"),
+					cliutil.Cyan(change.Field),
+					cliutil.Yellow("write-only on GitHub; value hidden"),
 					change.Desired,
 				)
 				continue
 			}
 
-			arrow := common.Yellow("→")
+			arrow := cliutil.Yellow("→")
 			if reflect.DeepEqual(change.Current, change.Desired) {
 				arrow = "="
 			}
 			fmt.Printf( //nolint:forbidigo // CLI output
 				"   %s: %v %s %v\n",
-				common.Cyan(change.Field),
+				cliutil.Cyan(change.Field),
 				change.Current,
 				arrow,
 				change.Desired,
@@ -135,5 +135,5 @@ func printResults(results []reposync.Result) {
 		}
 	}
 
-	fmt.Println("\n" + common.BoldWhite(common.Repeat("=", common.SeparatorWidth))) //nolint:forbidigo // CLI output
+	fmt.Println("\n" + cliutil.BoldWhite(cliutil.Repeat("=", cliutil.SeparatorWidth))) //nolint:forbidigo // CLI output
 }

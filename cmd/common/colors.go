@@ -1,5 +1,5 @@
-// Package common provides shared utilities for CLI commands.
-package common
+// Package cliutil provides shared utilities for CLI commands.
+package cliutil
 
 import (
 	"strings"

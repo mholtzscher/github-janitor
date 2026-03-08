@@ -8,7 +8,7 @@ import (
 
 	ufcli "github.com/urfave/cli/v3"
 
-	"github.com/mholtzscher/github-janitor/cmd/common"
+	cliutil "github.com/mholtzscher/github-janitor/cmd/common"
 	"github.com/mholtzscher/github-janitor/internal/config"
 )
 
@@ -24,7 +24,7 @@ func NewCommand() *ufcli.Command {
 }
 
 func runInit(cmd *ufcli.Command) error {
-	configPath := cmd.String(common.FlagConfig)
+	configPath := cmd.String(cliutil.FlagConfig)
 
 	// Check if file already exists
 	if _, err := os.Stat(configPath); err == nil {
@@ -37,12 +37,12 @@ func runInit(cmd *ufcli.Command) error {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
 
-	fmt.Printf("Created example configuration file: %s\n", common.Green(configPath)) //nolint:forbidigo // CLI output
-	fmt.Println("\n" + common.BoldWhite("Next steps:"))                              //nolint:forbidigo // CLI output
-	fmt.Println("1. Edit the configuration file to add your repositories")           //nolint:forbidigo // CLI output
-	fmt.Println("2. Run 'github-janitor validate' to verify your setup")             //nolint:forbidigo // CLI output
-	fmt.Println("3. Run 'github-janitor plan' to preview changes")                   //nolint:forbidigo // CLI output
-	fmt.Println("4. Run 'github-janitor apply' to apply changes")                    //nolint:forbidigo // CLI output
+	fmt.Printf("Created example configuration file: %s\n", cliutil.Green(configPath)) //nolint:forbidigo // CLI output
+	fmt.Println("\n" + cliutil.BoldWhite("Next steps:"))                              //nolint:forbidigo // CLI output
+	fmt.Println("1. Edit the configuration file to add your repositories")            //nolint:forbidigo // CLI output
+	fmt.Println("2. Run 'github-janitor validate' to verify your setup")              //nolint:forbidigo // CLI output
+	fmt.Println("3. Run 'github-janitor plan' to preview changes")                    //nolint:forbidigo // CLI output
+	fmt.Println("4. Run 'github-janitor apply' to apply changes")                     //nolint:forbidigo // CLI output
 
 	return nil
 }

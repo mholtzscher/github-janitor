@@ -1,4 +1,4 @@
-package common //nolint:revive // Package name is descriptive enough
+package cliutil
 
 const (
 	FlagNoColor = "no-color"
