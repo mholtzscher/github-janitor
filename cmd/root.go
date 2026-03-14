@@ -17,7 +17,7 @@ import (
 )
 
 // Version is set at build time.
-var Version = "0.2.0" //nolint:gochecknoglobals // x-release-please-version
+var Version = "0.2.1" //nolint:gochecknoglobals // x-release-please-version
 
 // Run is the entry point for the CLI.
 func Run(ctx context.Context, args []string) error {
