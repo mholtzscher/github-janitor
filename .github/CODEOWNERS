@@ -1,0 +1,5 @@
+# Default owner for all files
+* @mholtzscher
+
+# GitHub-specific config
+.github/ @mholtzscher
