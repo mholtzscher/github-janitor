@@ -1,0 +1,16 @@
+diff a/.github/workflows/nix-ci.yml b/.github/workflows/nix-ci.yml	(rejected hunks)
+@@ -21,10 +21,14 @@ jobs:
+         os:
+           - ubuntu-latest
+           - macos-latest
++    permissions:
++      contents: write
+ 
+     steps:
+       - name: Checkout
+         uses: actions/checkout@v6
++        with:
++          ref: ${{ github.head_ref || github.ref }}
+ 
+       - name: Install Nix
+         uses: DeterminateSystems/nix-installer-action@v21

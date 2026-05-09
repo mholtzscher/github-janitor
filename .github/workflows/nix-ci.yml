@@ -34,11 +34,24 @@ jobs:
           name: ${{ github.repository_owner }}
           authToken: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
 
-      - name: Verify gomod2nix.toml is up to date
+      - name: Verify and fix gomod2nix.toml
         if: matrix.os == 'ubuntu-latest'
         run: |
           nix develop -c just gomod2nix
-          git diff --exit-code -- gomod2nix.toml
+          if ! git diff --exit-code -- gomod2nix.toml; then
+            echo "gomod2nix.toml was out of date and has been regenerated"
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git add gomod2nix.toml
+              git commit -m "chore: update gomod2nix.toml"
+              git push
+              echo "Fixed and pushed gomod2nix.toml — CI will re-trigger the check"
+            else
+              echo "Push to main — failing the check instead of auto-fixing"
+              exit 1
+            fi
+          fi
 
       - name: Nix flake check
         run: nix flake check
