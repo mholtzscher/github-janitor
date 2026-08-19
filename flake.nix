@@ -35,7 +35,7 @@
         buildInputs = [ ];
 
         # macOS-specific build inputs for CGO
-        darwinBuildInputs = pkgs.lib.optionals pkgs.stdenv.isDarwin [
+        darwinBuildInputs = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
           pkgs.apple-sdk_15
         ];
       in
