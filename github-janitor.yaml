@@ -17,6 +17,12 @@ repositories:
     name: atlas
   - owner: mholtzscher
     name: agent-artifacts
+  - owner: mholtzscher
+    name: hearth
+  - owner: mholtzscher
+    name: herdr-worktree-picker
+  - owner: mholtzscher
+    name: pi-review-gate
 
 settings:
   # Merge methods
