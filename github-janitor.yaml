@@ -23,6 +23,8 @@ repositories:
     name: herdr-worktree-picker
   - owner: mholtzscher
     name: pi-review-gate
+  - owner: mholtzscher
+    name: herdr-focus-or-tab
 
 settings:
   # Merge methods
