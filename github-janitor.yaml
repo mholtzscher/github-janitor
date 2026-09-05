@@ -22,8 +22,6 @@ repositories:
   - owner: mholtzscher
     name: herdr-worktree-picker
   - owner: mholtzscher
-    name: pi-review-gate
-  - owner: mholtzscher
     name: herdr-focus-or-tab
 
 settings:
@@ -40,7 +38,7 @@ settings:
   # merge_commit_message: PR_BODY
 
   # Repository visibility
-  visibility: public
+  # visibility: public
 
   # Repository features
   has_issues: true
@@ -69,27 +67,21 @@ settings:
 
   # Branch protection (applied to all repos)
   # NOTE: before running `apply`, set status_check_contexts to the actual checks your repos use.
-  branch_protection:
-    enabled: true
-    pattern: "main"
-
-    # Pull request reviews
-    required_reviews: 0
-    dismiss_stale_reviews: true
-    require_code_owner_reviews: false
-
-    # Status checks
-    # require_status_checks: true
-    # require_branches_up_to_date: true
-    # status_check_contexts: ["ci/test"]
-
-    # Other branch protection
-    include_admins: false
-    require_linear_history: false
-    require_signed_commits: false
-    # require_conversation_resolution: true
-    allow_force_pushes: false
-    allow_deletions: false
+  # branch_protection:
+  #   enabled: true
+  #   pattern: "main"
+  #
+  #   # Pull request reviews
+  #   required_reviews: 0
+  #   dismiss_stale_reviews: true
+  #   require_code_owner_reviews: false
+  #
+  #   # Other branch protection
+  #   include_admins: false
+  #   require_linear_history: false
+  #   require_signed_commits: false
+  #   allow_force_pushes: false
+  #   allow_deletions: false
 
   actions_secrets:
     - name: CACHIX_AUTH_TOKEN
