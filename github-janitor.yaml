@@ -20,6 +20,8 @@ repositories:
   - owner: mholtzscher
     name: hearth
   - owner: mholtzscher
+    name: pi-extensions
+  - owner: mholtzscher
     name: herdr-worktree-picker
   - owner: mholtzscher
     name: herdr-focus-or-tab
