@@ -6,8 +6,6 @@ repositories:
   - owner: mholtzscher
     name: homebrew-tap
   - owner: mholtzscher
-    name: ugh
-  - owner: mholtzscher
     name: github-janitor
   - owner: mholtzscher
     name: today
