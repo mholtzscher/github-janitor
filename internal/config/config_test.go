@@ -34,7 +34,7 @@ func TestValidate_SecurityDependabotUpdatesRequireAlerts(t *testing.T) {
 			Repositories: []Repository{{Owner: "o", Name: "r"}},
 			Settings: Settings{
 				Security: &SecuritySettings{
-					DependabotSecurityUpdates: boolPtr(true),
+					DependabotSecurityUpdates: new(true),
 				},
 			},
 		}
@@ -49,8 +49,8 @@ func TestValidate_SecurityDependabotUpdatesRequireAlerts(t *testing.T) {
 			Repositories: []Repository{{Owner: "o", Name: "r"}},
 			Settings: Settings{
 				Security: &SecuritySettings{
-					DependabotAlerts:          boolPtr(true),
-					DependabotSecurityUpdates: boolPtr(true),
+					DependabotAlerts:          new(true),
+					DependabotSecurityUpdates: new(true),
 				},
 			},
 		}
@@ -59,8 +59,4 @@ func TestValidate_SecurityDependabotUpdatesRequireAlerts(t *testing.T) {
 			t.Fatalf("Validate() error = %v; want nil", err)
 		}
 	})
-}
-
-func boolPtr(v bool) *bool {
-	return &v
 }

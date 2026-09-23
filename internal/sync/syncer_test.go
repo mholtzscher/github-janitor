@@ -12,10 +12,6 @@ import (
 	"github.com/mholtzscher/github-janitor/internal/github"
 )
 
-func boolPtr(v bool) *bool       { return &v }
-func stringPtr(v string) *string { return &v }
-func intPtr(v int) *int          { return &v }
-
 type fakeGitHubClient struct {
 	getRepoCalls      int
 	updateRepoCalls   int
@@ -329,8 +325,8 @@ func TestSyncRepository_DryRunDoesNotUpdate(t *testing.T) {
 	cfg := &config.Config{
 		Repositories: []config.Repository{repo},
 		Settings: config.Settings{
-			AllowMergeCommit: boolPtr(true),
-			Visibility:       stringPtr("private"),
+			AllowMergeCommit: new(true),
+			Visibility:       new("private"),
 		},
 	}
 
@@ -371,9 +367,9 @@ func TestSyncRepository_AppliesUpdateWhenChanged(t *testing.T) {
 	cfg := &config.Config{
 		Repositories: []config.Repository{repo},
 		Settings: config.Settings{
-			AllowMergeCommit: boolPtr(true),
-			AllowSquashMerge: boolPtr(true),
-			Visibility:       stringPtr("private"),
+			AllowMergeCommit: new(true),
+			AllowSquashMerge: new(true),
+			Visibility:       new("private"),
 		},
 	}
 
@@ -409,7 +405,7 @@ func TestSyncRepository_PropagatesUpdateError(t *testing.T) {
 	}
 	cfg := &config.Config{
 		Repositories: []config.Repository{repo},
-		Settings:     config.Settings{AllowMergeCommit: boolPtr(true)},
+		Settings:     config.Settings{AllowMergeCommit: new(true)},
 	}
 
 	s := &Syncer{client: fake, config: cfg}
@@ -461,7 +457,7 @@ func TestSyncBranchProtection_ErrorsWhenStatusChecksRequiredButNoneConfiguredOrE
 			BranchProtection: &config.BranchProtection{
 				Enabled:             true,
 				Pattern:             "main",
-				RequireStatusChecks: boolPtr(true),
+				RequireStatusChecks: new(true),
 			},
 		},
 	}
@@ -494,7 +490,7 @@ func TestSyncBranchProtection_ConfiguredContextsOverrideAndClearChecks(t *testin
 			BranchProtection: &config.BranchProtection{
 				Enabled:             true,
 				Pattern:             "main",
-				RequireStatusChecks: boolPtr(true),
+				RequireStatusChecks: new(true),
 				StatusCheckContexts: []string{"ci/test"},
 			},
 		},
@@ -542,8 +538,8 @@ func TestSyncBranchProtection_ConfiguredReviewsEnablePRReviews(t *testing.T) {
 			BranchProtection: &config.BranchProtection{
 				Enabled:             true,
 				Pattern:             "main",
-				RequiredReviews:     intPtr(2),
-				DismissStaleReviews: boolPtr(true),
+				RequiredReviews:     new(2),
+				DismissStaleReviews: new(true),
 			},
 		},
 	}
@@ -586,7 +582,7 @@ func TestSyncBranchProtection_ConfiguredZeroReviewsEnablesPRReviews(t *testing.T
 			BranchProtection: &config.BranchProtection{
 				Enabled:         true,
 				Pattern:         "main",
-				RequiredReviews: intPtr(0),
+				RequiredReviews: new(0),
 			},
 		},
 	}
@@ -623,8 +619,8 @@ func TestSyncSecuritySettings_DryRunShowsChangesWithoutMutations(t *testing.T) {
 		Repositories: []config.Repository{repo},
 		Settings: config.Settings{
 			Security: &config.SecuritySettings{
-				DependabotAlerts:          boolPtr(true),
-				DependabotSecurityUpdates: boolPtr(true),
+				DependabotAlerts:          new(true),
+				DependabotSecurityUpdates: new(true),
 			},
 		},
 	}
@@ -661,8 +657,8 @@ func TestSyncSecuritySettings_ApplyEnableOrder(t *testing.T) {
 		Repositories: []config.Repository{repo},
 		Settings: config.Settings{
 			Security: &config.SecuritySettings{
-				DependabotAlerts:          boolPtr(true),
-				DependabotSecurityUpdates: boolPtr(true),
+				DependabotAlerts:          new(true),
+				DependabotSecurityUpdates: new(true),
 			},
 		},
 	}
@@ -692,8 +688,8 @@ func TestSyncSecuritySettings_ApplyDisableOrder(t *testing.T) {
 		Repositories: []config.Repository{repo},
 		Settings: config.Settings{
 			Security: &config.SecuritySettings{
-				DependabotAlerts:          boolPtr(false),
-				DependabotSecurityUpdates: boolPtr(false),
+				DependabotAlerts:          new(false),
+				DependabotSecurityUpdates: new(false),
 			},
 		},
 	}
