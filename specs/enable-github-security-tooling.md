@@ -169,7 +169,7 @@ Implement Option A now. Keep schema and sync design extensible for additional se
 - `apply` updates toggles in correct dependency-aware order.
 - If one repo fails, remaining repos are still processed and reported.
 - Existing non-security settings behavior remains unchanged.
-- `just check` passes.
+- `mise run check` passes.
 
 ## Risks and Mitigations
 

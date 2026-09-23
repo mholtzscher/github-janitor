@@ -101,7 +101,7 @@ GitHub requires client-side encryption using libsodium sealed boxes:
 | 3 | GitHub client: Actions secrets REST + encryption | M | - |
 | 4 | Sync integration: plan/apply secrets | M | 2, 3 |
 | 5 | Tests (config, resolvers, client) | M | 1-4 |
-| 6 | Dependency updates + `just check` | S | 1-5 |
+| 6 | Dependency updates + `mise run check` | S | 1-5 |
 
 ## Acceptance Criteria
 
@@ -110,7 +110,7 @@ GitHub requires client-side encryption using libsodium sealed boxes:
 - [ ] Missing/empty env var or command failure aborts before any repo mutations
 - [ ] Output never contains secret values or full command argv
 - [ ] Config rejects invalid secret names, duplicates, invalid sources
-- [ ] `just check` passes
+- [ ] `mise run check` passes
 
 ## Open Questions
 

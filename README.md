@@ -6,11 +6,6 @@ Instead of clicking through the GitHub UI to configure branch protections, merge
 
 ## Installation
 
-**Nix**
-```bash
-nix run github:mholtzscher/github-janitor
-```
-
 **Homebrew**
 ```bash
 brew install mholtzscher/tap/github-janitor
@@ -20,7 +15,7 @@ brew install mholtzscher/tap/github-janitor
 ```bash
 git clone https://github.com/mholtzscher/github-janitor.git
 cd github-janitor
-nix build
+go build -o github-janitor .
 ```
 
 ## Authentication
@@ -119,18 +114,17 @@ settings:
 
 ## Development
 
-This project uses Nix for reproducible development environments and `just` as a command runner.
+This project uses [mise](https://mise.jdx.dev/) to manage Go and development tasks.
 
 ```bash
-# Enter the dev shell
-nix develop
-# Or if you use direnv: direnv allow
+# Install the configured Go version (or activate mise in your shell)
+mise install
 
 # Run checks (format, lint, test)
-just check
+mise run check
 
 # Build locally
-just build
+mise run build
 ```
 
 ## License
