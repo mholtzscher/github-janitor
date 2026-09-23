@@ -1,0 +1,70 @@
+[tools]
+go = "1.27.1"
+
+[env]
+CGO_ENABLED = "0"
+
+[tasks.build]
+description = "Build the CLI"
+run = "go build -o github-janitor ."
+
+[tasks.build-release]
+description = "Build a stripped CLI"
+run = 'go build -ldflags="-s -w" -o github-janitor .'
+
+[tasks.run]
+description = "Run the CLI with arguments"
+raw_args = true
+run = "go run ."
+
+[tasks.test]
+description = "Run all tests"
+run = "go test ./..."
+
+[tasks.test-verbose]
+description = "Run all tests verbosely"
+run = "go test -v ./..."
+
+[tasks.test-run]
+description = "Run tests matching a name"
+usage = 'arg "<name>"'
+run = 'go test -run "$usage_name" ./...'
+
+[tasks.test-pkg]
+description = "Test a package"
+usage = 'arg "<package>"'
+run = 'go test "./$usage_package"'
+
+[tasks.fmt]
+description = "Format Go code"
+run = "go fmt ./..."
+
+[tasks.vet]
+description = "Run Go static analysis"
+run = "go vet ./..."
+
+[tasks.lint]
+description = "Run golangci-lint from go.mod"
+run = "go tool golangci-lint run"
+
+[tasks.tidy]
+description = "Tidy Go modules"
+run = "go mod tidy"
+
+[tasks.check]
+description = "Format, vet, lint, test, and verify tidy modules"
+run = [
+  { task = "fmt" },
+  { task = "vet" },
+  { task = "lint" },
+  { task = "test" },
+  "go mod tidy -diff",
+]
+
+[tasks.update-deps]
+description = "Update Go dependencies"
+run = ["go get -u ./...", "go mod tidy"]
+
+[tasks.govulncheck]
+description = "Run govulncheck (requires it on PATH)"
+run = "govulncheck ./..."

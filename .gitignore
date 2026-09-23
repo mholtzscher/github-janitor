@@ -1,6 +1,5 @@
 # Binaries
 /github-janitor
-result
 
 # Go
 *.exe
@@ -12,7 +11,10 @@ result
 *.out
 vendor/
 
-# Nix
+# Local mise overrides
+mise.local.toml
+
+# Existing local environment cache
 .direnv/
 
 # IDE

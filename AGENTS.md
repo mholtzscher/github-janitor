@@ -1,43 +1,39 @@
 # AGENTS.md - AI Agent Guidelines for github-janitor
 
-A Go CLI tool built with Nix
+A Go CLI tool with mise-managed development tasks
 
-**Stack**: Go 1.25+, urfave/cli/v3
+**Stack**: Go 1.27+, urfave/cli/v3
 
 ## Rules
 
 **Never commit code unless explicitly prompted by the user.**
-**Always run `just check` after making changes.**
+**Always run `mise run check` after making changes.**
 
 ## Commands
 
-Uses direnv with nix flake for automatic environment setup. Use `just` for development tasks.
+Use `mise install` for the Go toolchain and `mise run` for development tasks.
 
 ```bash
 # Build
-just build                     # dev build
-just build-release             # release build
+mise run build                 # dev build
+mise run build-release         # release build
 
 # Run
-just run <args>                # run locally
+mise run run -- <args>         # run locally
 
 # Test
-just test                      # all tests
-just test-verbose              # verbose test output
+mise run test                  # all tests
+mise run test-verbose          # verbose test output
 
 # Lint/format
-just fmt                       # format code
-just vet                       # static analysis
-just lint                      # comprehensive linting (golangci-lint)
-just check                     # run all checks (fmt, vet, lint, test)
+mise run fmt                   # format code
+mise run vet                   # static analysis
+mise run lint                  # comprehensive linting (golangci-lint)
+mise run check                 # run all checks
 
 # Dependencies
-just tidy                      # go mod tidy
-just update-deps               # update dependencies and gomod2nix.toml
-
-# Nix build/run
-nix build                      # build package
-nix run                        # run package
+mise run tidy                  # go mod tidy
+mise run update-deps           # update Go dependencies
 ```
 
 ## Project Structure
@@ -56,7 +52,7 @@ github-janitor/
 │       └── example.go          # Example internal package
 ├── go.mod
 ├── go.sum
-└── flake.nix
+└── mise.toml
 ```
 
 ## Code Style
