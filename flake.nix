@@ -49,7 +49,7 @@
           inherit version;
           src = ./.;
           modules = ./gomod2nix.toml;
-          go = pkgs.go_1_25;
+          go = pkgs.go_1_26;
 
           buildInputs = buildInputs ++ darwinBuildInputs;
 
@@ -75,7 +75,7 @@
 
         devShells.default = pkgs.mkShell {
           buildInputs = [
-            pkgs.go_1_25
+            pkgs.go_1_26
             pkgs.gopls
             pkgs.gotools
             pkgs.gomod2nix
@@ -90,7 +90,7 @@
 
         devShells.ci = pkgs.mkShell {
           buildInputs = [
-            pkgs.go_1_25
+            pkgs.go_1_26
             pkgs.just
           ]
           ++ buildInputs
